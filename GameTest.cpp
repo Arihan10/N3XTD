@@ -17,6 +17,14 @@
 #include <algorithm>
 //------------------------------------------------------------------------
 #include "app\app.h"
+
+extern int WINDOW_WIDTH;
+extern int WINDOW_HEIGHT;
+
+#include "Vector3.h"
+#include "Shape3D.h"
+#include "Cube.h"
+#include "CustomShape.h"
 //------------------------------------------------------------------------
 
 // Example data....
@@ -29,85 +37,69 @@ enum
 	ANIM_RIGHT,
 };
 
+// Camera and lighting
+Vector3 camPos(0.0, 0.0, 0.0);
+Vector3 lightDir(0.0, -1.0, -0.5);
+sf::Color bgCol(0, 120, 220);
+
+// Camera rotation angles
+double angleY = 0.0;
+double angleX = 0.0;
+double FoV = 20.0; // 28
+double zFar = 80.0;
+double zNear = 2.0;
+double moveSpeed = 200.0;
+double mouseSensitivityX = 0.4;
+double mouseSensitivityY = 0.3;
+double deltaX = 0.0;
+double deltaY = 0.0;
+
+// Directional keys
+bool dirs[10] = { false };
+
+// Mouse control
+bool movingCamera = false;
+
+// Objects in the scene
+std::vector<Shape3D*> objects;
+
 // Start
 void Init()
 {
-	testSprite = App::CreateSprite(".\\TestData\\Test.bmp", 8, 4);
-	testSprite->SetPosition(400.0f, 400.0f);
-	const float speed = 1.0f / 15.0f;
-	testSprite->CreateAnimation(ANIM_BACKWARDS, speed, { 0,1,2,3,4,5,6,7 });
-	testSprite->CreateAnimation(ANIM_LEFT, speed, { 8,9,10,11,12,13,14,15 });
-	testSprite->CreateAnimation(ANIM_RIGHT, speed, { 16,17,18,19,20,21,22,23 });
-	testSprite->CreateAnimation(ANIM_FORWARDS, speed, { 24,25,26,27,28,29,30,31 });
-	testSprite->SetScale(1.0f); 
+	// Add initial objects
+	// objects.push_back(new Cube(Vector3(0, 0, -10), Vector3(3, 3, 3)));
+	objects.push_back(new CustomShape("Suzanne.obj", Vector3(700, -100, -500), Vector3(3, 3, 3)));
+	objects.push_back(new CustomShape("Fire_Axe_Test_3.obj", Vector3(700, 0, -900), Vector3(1, 1, 1)));
+	objects.push_back(new CustomShape("AK_1.obj", Vector3(300, 0, -700), Vector3(3, 3, 3))); 
 }
 
 // Update
 void Update(const float deltaTime)
 {
-	// Example sprite code
-	testSprite->Update(deltaTime);
-	if (App::GetController().GetLeftThumbStickX() > 0.5f)
-	{
-		testSprite->SetAnimation(ANIM_RIGHT);
-		float x, y;
-		testSprite->GetPosition(x, y);
-		x += 1.0f;
-		testSprite->SetPosition(x, y);
-	}
-	if (App::GetController().GetLeftThumbStickX() < -0.5f)
-	{
-		testSprite->SetAnimation(ANIM_LEFT);
-		float x, y;
-		testSprite->GetPosition(x, y);
-		x -= 1.0f;
-		testSprite->SetPosition(x, y);
-	}
-    if (App::GetController().GetLeftThumbStickY() > 0.5f)
-    {
-        testSprite->SetAnimation(ANIM_FORWARDS);
-        float x, y;
-        testSprite->GetPosition(x, y);
-        y += 1.0f;
-        testSprite->SetPosition(x, y);
-    }
-	if (App::GetController().GetLeftThumbStickY() < -0.5f)
-	{
-		testSprite->SetAnimation(ANIM_BACKWARDS);
-		float x, y;
-		testSprite->GetPosition(x, y);
-		y -= 1.0f;
-		testSprite->SetPosition(x, y);
-	}
-	if (App::GetController().CheckButton(XINPUT_GAMEPAD_DPAD_UP, false))
-	{
-		testSprite->SetScale(testSprite->GetScale() + 0.1f);
-	}
-	if (App::GetController().CheckButton(XINPUT_GAMEPAD_DPAD_DOWN, false))
-	{
-		testSprite->SetScale(testSprite->GetScale() - 0.1f);
-	}
-	if (App::GetController().CheckButton(XINPUT_GAMEPAD_DPAD_LEFT, false))
-	{
-		testSprite->SetAngle(testSprite->GetAngle() + 0.1f);
-	}
-	if (App::GetController().CheckButton(XINPUT_GAMEPAD_DPAD_RIGHT, false))
-	{
-		testSprite->SetAngle(testSprite->GetAngle() - 0.1f);
-	}
-	if (App::GetController().CheckButton(XINPUT_GAMEPAD_A, true))
-	{
-		testSprite->SetAnimation(-1);
-	}
+	// Check WASD movement
+	dirs[2] = App::IsKeyPressed('W'); 
+	dirs[3] = App::IsKeyPressed('S'); 
+	dirs[4] = App::IsKeyPressed('A'); 
+	dirs[5] = App::IsKeyPressed('D'); 
+	// Check Q/E vertical movement
+	dirs[0] = App::IsKeyPressed('E'); 
+	dirs[1] = App::IsKeyPressed('Q'); 
+	// Check camera movement (Shift)
+	bool currentMovingCamera = App::IsKeyPressed(VK_SHIFT); 
+	// Check escape
+	if (App::IsKeyPressed(VK_ESCAPE)) glutLeaveMainLoop(); 
 
-	// Example sound
-	if (App::GetController().CheckButton(XINPUT_GAMEPAD_B, true))
-	{
-		App::PlaySound(".\\TestData\\Test.wav", true);
-	}
-	if (App::GetController().CheckButton(XINPUT_GAMEPAD_X, true))
-	{
-		App::StopSound(".\\TestData\\Test.wav");
+	if (movingCamera) {
+		float mouseX, mouseY;
+		App::GetMousePos(mouseX, mouseY);
+
+		// The API gives us normalized coordinates (-1 to 1)
+		// Convert to pixel coordinates relative to center
+		float centerX = 0.0f; // Center is 0 in normalized coords
+		float centerY = 0.0f;
+
+		deltaX = (mouseX - centerX) * WINDOW_WIDTH / 2;  // Scale back to pixels
+		deltaY = (mouseY - centerY) * WINDOW_HEIGHT / 2;
 	}
 }
 
