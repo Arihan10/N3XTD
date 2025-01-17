@@ -1,3 +1,5 @@
+#include "stdafx.h"
+
 // Cube.cpp
 #include "Cube.h"
 

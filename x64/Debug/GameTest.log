@@ -1,12 +1,44 @@
-﻿  stdafx.cpp
-  app.cpp
-  main.cpp
-  SimpleController.cpp
-  SimpleSound.cpp
-  SimpleSprite.cpp
+﻿  CustomShape.cpp
+C:\Users\Ariha\Downloads\Ubisoft-Toronto-NEXT-2024-2025-Programming-API\API\GameTest\CustomShape.cpp(35,18): warning C4101: 'slash': unreferenced local variable
+  (compiling source file '/CustomShape.cpp')
+  
   GameTest.cpp
-  miniaudio.cpp
-  stb_image.cpp
+C:\Users\Ariha\Downloads\Ubisoft-Toronto-NEXT-2024-2025-Programming-API\API\GameTest\GameTest.cpp(212,55): warning C4244: 'argument': conversion from 'double' to 'const float', possible loss of data
+  (compiling source file '/GameTest.cpp')
+  
+C:\Users\Ariha\Downloads\Ubisoft-Toronto-NEXT-2024-2025-Programming-API\API\GameTest\GameTest.cpp(212,36): warning C4244: 'argument': conversion from 'double' to 'const float', possible loss of data
+  (compiling source file '/GameTest.cpp')
+  
+C:\Users\Ariha\Downloads\Ubisoft-Toronto-NEXT-2024-2025-Programming-API\API\GameTest\GameTest.cpp(211,65): warning C4244: 'argument': conversion from 'double' to 'const float', possible loss of data
+  (compiling source file '/GameTest.cpp')
+  
+C:\Users\Ariha\Downloads\Ubisoft-Toronto-NEXT-2024-2025-Programming-API\API\GameTest\GameTest.cpp(211,46): warning C4244: 'argument': conversion from 'double' to 'const float', possible loss of data
+  (compiling source file '/GameTest.cpp')
+  
+C:\Users\Ariha\Downloads\Ubisoft-Toronto-NEXT-2024-2025-Programming-API\API\GameTest\GameTest.cpp(214,55): warning C4244: 'argument': conversion from 'double' to 'const float', possible loss of data
+  (compiling source file '/GameTest.cpp')
+  
+C:\Users\Ariha\Downloads\Ubisoft-Toronto-NEXT-2024-2025-Programming-API\API\GameTest\GameTest.cpp(214,36): warning C4244: 'argument': conversion from 'double' to 'const float', possible loss of data
+  (compiling source file '/GameTest.cpp')
+  
+C:\Users\Ariha\Downloads\Ubisoft-Toronto-NEXT-2024-2025-Programming-API\API\GameTest\GameTest.cpp(213,65): warning C4244: 'argument': conversion from 'double' to 'const float', possible loss of data
+  (compiling source file '/GameTest.cpp')
+  
+C:\Users\Ariha\Downloads\Ubisoft-Toronto-NEXT-2024-2025-Programming-API\API\GameTest\GameTest.cpp(213,46): warning C4244: 'argument': conversion from 'double' to 'const float', possible loss of data
+  (compiling source file '/GameTest.cpp')
+  
+C:\Users\Ariha\Downloads\Ubisoft-Toronto-NEXT-2024-2025-Programming-API\API\GameTest\GameTest.cpp(216,55): warning C4244: 'argument': conversion from 'double' to 'const float', possible loss of data
+  (compiling source file '/GameTest.cpp')
+  
+C:\Users\Ariha\Downloads\Ubisoft-Toronto-NEXT-2024-2025-Programming-API\API\GameTest\GameTest.cpp(216,36): warning C4244: 'argument': conversion from 'double' to 'const float', possible loss of data
+  (compiling source file '/GameTest.cpp')
+  
+C:\Users\Ariha\Downloads\Ubisoft-Toronto-NEXT-2024-2025-Programming-API\API\GameTest\GameTest.cpp(215,65): warning C4244: 'argument': conversion from 'double' to 'const float', possible loss of data
+  (compiling source file '/GameTest.cpp')
+  
+C:\Users\Ariha\Downloads\Ubisoft-Toronto-NEXT-2024-2025-Programming-API\API\GameTest\GameTest.cpp(215,46): warning C4244: 'argument': conversion from 'double' to 'const float', possible loss of data
+  (compiling source file '/GameTest.cpp')
+  
   Generating Code...
   GameTest.vcxproj -> C:\Users\Ariha\Downloads\Ubisoft-Toronto-NEXT-2024-2025-Programming-API\API\x64\Debug\GameTest.exe
   'pwsh.exe' is not recognized as an internal or external command,

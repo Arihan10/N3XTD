@@ -1,3 +1,5 @@
+#include "stdafx.h"
+
 // CustomShape.cpp
 #include "CustomShape.h"
 #include <fstream>
@@ -26,7 +28,7 @@ CustomShape::CustomShape(const std::string& filename, const Vector3& pos, const 
         if (type == "v") {
             double x, y, z;
             ss >> x >> y >> z;
-            vertsOG.emplace_back(x, -y, z, 1);
+            vertsOG.emplace_back(x, y, z, 1);
         }
         else if (type == "f") {
             int idx1, idx2, idx3;

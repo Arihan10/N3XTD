@@ -1,13 +1,9 @@
 ///////////////////////////////////////////////////////////////////////////////
-// Filename: GameTest.cpp
-// Provides a demo of how to use the API
+// GameTest.cpp - 3D Wireframe Renderer
 ///////////////////////////////////////////////////////////////////////////////
-//------------------------------------------------------------------------
 #include "stdafx.h"
-//------------------------------------------------------------------------
 #include <windows.h>
 #include <math.h>
-
 #include <vector>
 #include <queue>
 #include <cmath>
@@ -15,124 +11,217 @@
 #include <string>
 #include <functional>
 #include <algorithm>
-//------------------------------------------------------------------------
 #include "app\app.h"
-
-extern int WINDOW_WIDTH;
-extern int WINDOW_HEIGHT;
-
 #include "Vector3.h"
 #include "Shape3D.h"
 #include "Cube.h"
 #include "CustomShape.h"
-//------------------------------------------------------------------------
 
-// Example data....
-CSimpleSprite *testSprite;
-enum
-{
-	ANIM_FORWARDS,
-	ANIM_BACKWARDS,
-	ANIM_LEFT,
-	ANIM_RIGHT,
-};
+extern int WINDOW_WIDTH;
+extern int WINDOW_HEIGHT;
 
 // Camera and lighting
 Vector3 camPos(0.0, 0.0, 0.0);
 Vector3 lightDir(0.0, -1.0, -0.5);
-sf::Color bgCol(0, 120, 220);
 
 // Camera rotation angles
 double angleY = 0.0;
 double angleX = 0.0;
-double FoV = 20.0; // 28
+double FoV = 20.0;
 double zFar = 80.0;
 double zNear = 2.0;
-double moveSpeed = 200.0;
-double mouseSensitivityX = 0.4;
-double mouseSensitivityY = 0.3;
+double moveSpeed = 2.0;
+double mouseSensitivityX = 0.000004;
+double mouseSensitivityY = 0.000003;
 double deltaX = 0.0;
 double deltaY = 0.0;
+float lastMouseX = 0;
+float lastMouseY = 0;
 
-// Directional keys
+// Directional keys and mouse control
 bool dirs[10] = { false };
-
-// Mouse control
 bool movingCamera = false;
 
 // Objects in the scene
 std::vector<Shape3D*> objects;
 
-// Start
 void Init()
 {
-	// Add initial objects
-	// objects.push_back(new Cube(Vector3(0, 0, -10), Vector3(3, 3, 3)));
-	objects.push_back(new CustomShape("Suzanne.obj", Vector3(700, -100, -500), Vector3(3, 3, 3)));
-	objects.push_back(new CustomShape("Fire_Axe_Test_3.obj", Vector3(700, 0, -900), Vector3(1, 1, 1)));
-	objects.push_back(new CustomShape("AK_1.obj", Vector3(300, 0, -700), Vector3(3, 3, 3))); 
+    objects.push_back(new CustomShape("Suzanne.obj", Vector3(0, 0, 1000), Vector3(3, 3, 3)));
+    // objects.push_back(new CustomShape("Fire_Axe_Test_3.obj", Vector3(700, 0, -900), Vector3(1, 1, 1)));
+    // objects.push_back(new CustomShape("AK_1.obj", Vector3(300, 0, -700), Vector3(3, 3, 3)));
 }
 
-// Update
 void Update(const float deltaTime)
 {
-	// Check WASD movement
-	dirs[2] = App::IsKeyPressed('W'); 
-	dirs[3] = App::IsKeyPressed('S'); 
-	dirs[4] = App::IsKeyPressed('A'); 
-	dirs[5] = App::IsKeyPressed('D'); 
-	// Check Q/E vertical movement
-	dirs[0] = App::IsKeyPressed('E'); 
-	dirs[1] = App::IsKeyPressed('Q'); 
-	// Check camera movement (Shift)
-	bool currentMovingCamera = App::IsKeyPressed(VK_SHIFT); 
-	// Check escape
-	if (App::IsKeyPressed(VK_ESCAPE)) glutLeaveMainLoop(); 
+    // Input handling
+    dirs[2] = App::IsKeyPressed('W'); 
+    dirs[3] = App::IsKeyPressed('S'); 
+    dirs[4] = App::IsKeyPressed('A'); 
+    dirs[5] = App::IsKeyPressed('D'); 
+    dirs[0] = App::IsKeyPressed('E'); // up
+    dirs[1] = App::IsKeyPressed('Q'); // down
 
-	if (movingCamera) {
-		float mouseX, mouseY;
-		App::GetMousePos(mouseX, mouseY);
+    bool currentMovingCamera = App::IsKeyPressed(VK_SHIFT);
+    if (currentMovingCamera && !movingCamera) {
+        // First frame of camera movement
+        movingCamera = true;
+    }
+    movingCamera = currentMovingCamera;
 
-		// The API gives us normalized coordinates (-1 to 1)
-		// Convert to pixel coordinates relative to center
-		float centerX = 0.0f; // Center is 0 in normalized coords
-		float centerY = 0.0f;
+    if (App::IsKeyPressed(VK_ESCAPE)) {
+        glutLeaveMainLoop();
+    }
 
-		deltaX = (mouseX - centerX) * WINDOW_WIDTH / 2;  // Scale back to pixels
-		deltaY = (mouseY - centerY) * WINDOW_HEIGHT / 2;
-	}
+    // Mouse handling
+    if (movingCamera) {
+        float mouseX, mouseY;
+        App::GetMousePos(mouseX, mouseY);
+
+        // Calculate delta from last frame's position
+        deltaX = (mouseX - lastMouseX) * WINDOW_WIDTH / 2;
+        deltaY = (mouseY - lastMouseY) * WINDOW_HEIGHT / 2;
+
+        // Store current position for next frame
+        lastMouseX = mouseX;
+        lastMouseY = mouseY;
+
+        // Camera movement
+        angleY -= deltaX * deltaTime * mouseSensitivityX;
+        angleX += deltaY * deltaTime * mouseSensitivityY;
+
+        if (dirs[0]) camPos.y += moveSpeed * deltaTime;
+        if (dirs[1]) camPos.y -= moveSpeed * deltaTime;
+        if (dirs[2]) {
+            camPos.x += sin(-angleY) * moveSpeed * deltaTime;
+            camPos.z += cos(-angleY) * moveSpeed * deltaTime;
+        }
+        if (dirs[3]) {
+            camPos.x -= sin(-angleY) * moveSpeed * deltaTime;
+            camPos.z -= cos(-angleY) * moveSpeed * deltaTime;
+        }
+        if (dirs[4]) {
+            camPos.x -= sin(-angleY + 3.14 / 2) * moveSpeed * deltaTime;
+            camPos.z -= cos(-angleY + 3.14 / 2) * moveSpeed * deltaTime;
+        }
+        if (dirs[5]) {
+            camPos.x += sin(-angleY + 3.14 / 2) * moveSpeed * deltaTime;
+            camPos.z += cos(-angleY + 3.14 / 2) * moveSpeed * deltaTime;
+        }
+    }
+    else {
+        // Reset deltas when not moving camera
+        deltaX = 0;
+        deltaY = 0;
+
+        // Get current mouse position so we don't get a huge delta
+        // when starting camera movement
+        App::GetMousePos(lastMouseX, lastMouseY);
+    }
 }
 
-// Add your display calls here (DrawLine,Print, DrawSprite.) 
-// See App.h 
 void Render()
-{	
-	// Example Sprite Code
-	testSprite->Draw();
+{
+    // Rotation matrices
+    double rotationX[4][4] = {
+        {1, 0, 0, 0},
+        {0, cos(angleX), -sin(angleX), 0},
+        {0, sin(angleX), cos(angleX), 0},
+        {0, 0, 0, 1}
+    };
 
-	// Example Text
-	App::Print(100, 100, "Sample Text");
+    double rotationY[4][4] = {
+        {cos(angleY), 0, sin(angleY), 0},
+        {0, 1, 0, 0},
+        {-sin(angleY), 0, cos(angleY), 0},
+        {0, 0, 0, 1}
+    };
 
-	// Example Line Drawing
-	static float a = 0.0f;
-	const float r = 1.0f;
-	float g = 1.0f;
-	float b = 1.0f;
-	a += 0.1f;
-	for (int i = 0; i < 20; i++)
-	{
+    // Projection matrix
+    double FoVScale = 1 / tan(FoV * 3.14 / 180.0 / 2.0);
+    double normalization = zFar / (zFar - zNear);
+    double lambda = (-zFar * zNear) / (zFar - zNear);
+    double perspective[4][4] = {
+        {FoVScale, 0, 0, 0},
+        {0, FoVScale, 0, 0},
+        {0, 0, normalization, lambda},
+        {0, 0, 1, 0}
+    };
 
-		const float sx = 200 + sinf(a + i * 0.1f) * 60.0f;
-		const float sy = 200 + cosf(a + i * 0.1f) * 60.0f;
-		const float ex = 700 - sinf(a + i * 0.1f) * 60.0f;
-		const float ey = 700 - cosf(a + i * 0.1f) * 60.0f;
-		g = (float)i / 20.0f;
-		b = (float)i / 20.0f;
-		App::DrawLine(sx, sy, ex, ey, r, g, b);
-	}
+    // Clipping arrays
+    Vector3 clipped[2][3];
+
+    // Render each object
+    for (Shape3D* object : objects) {
+        const std::vector<int>& tris = object->getTris();
+        const std::vector<Vector3>& verts = object->getVerts();
+
+        for (size_t j = 0; j < tris.size(); j += 3) {
+            Vector3 projectedVerts3D[3], translatedVertices[3];
+
+            // Transform and project vertices
+            for (int k = 0; k < 3; ++k) {
+                int vertIndex = tris[j + k];
+                Vector3 vert = verts[vertIndex];
+
+                // Translate by camera position
+                vert = vert - camPos;
+                translatedVertices[k] = vert;
+
+                // Rotate
+                vert = vert.multiplyMatrix(rotationY);
+                vert = vert.multiplyMatrix(rotationX);
+
+                // Project
+                vert = vert.multiplyMatrix(perspective); 
+
+                // Store for clipping
+                projectedVerts3D[k] = vert;
+            }
+
+            // Calculate normal for backface culling
+            Vector3 normal = (projectedVerts3D[1] - projectedVerts3D[0]).cross(projectedVerts3D[2] - projectedVerts3D[0]).normalize();
+            if (normal.dot(projectedVerts3D[0]) > 0) continue;
+
+            // Clip against near plane
+            int clippedTrianglesCount = Vector3::clipTriangleAgainstPlane(Vector3(0, 0, zNear), Vector3(0, 0, 1), projectedVerts3D, clipped);
+
+            // Process clipped triangles
+            for (int k = 0; k < clippedTrianglesCount; ++k) {
+                Vector3* currTri = clipped[k];
+                Vector3 screenPoints[3];
+
+                for (int l = 0; l < 3; ++l) {
+                    Vector3 vert = currTri[l]; 
+
+                    // Perspective divide
+                    if (vert.w != 0) {
+                        vert.x /= (vert.w / 100.0);
+                        vert.y /= (vert.w / 100.0);
+                    }
+
+                    // Screen space transform
+                    vert.x += WINDOW_WIDTH / 2.0;
+                    vert.y += WINDOW_HEIGHT / 2.0;
+
+                    screenPoints[l] = vert;
+                }
+
+                // Draw wireframe triangle
+                App::DrawLine(screenPoints[0].x, screenPoints[0].y,
+                    screenPoints[1].x, screenPoints[1].y, 1, 1, 1);
+                App::DrawLine(screenPoints[1].x, screenPoints[1].y,
+                    screenPoints[2].x, screenPoints[2].y, 1, 1, 1);
+                App::DrawLine(screenPoints[2].x, screenPoints[2].y,
+                    screenPoints[0].x, screenPoints[0].y, 1, 1, 1);
+            }
+        }
+    }
 }
-// OnDestroy
+
 void Shutdown()
 {
-	delete testSprite;
+    for (Shape3D* obj : objects) {
+        delete obj;
+    }
 }

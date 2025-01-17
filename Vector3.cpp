@@ -1,3 +1,5 @@
+#include "stdafx.h"
+
 // Vector3.cpp
 #include "Vector3.h"
 #include <cmath>

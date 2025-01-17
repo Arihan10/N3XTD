@@ -1,6 +1,8 @@
+#include "stdafx.h"
+
 // Shape3D.cpp
 #include "Shape3D.h"
-#include <random> 
+#include <random>
 
 const sf::Color Shape3D::randomColors[6] = {
     sf::Color::Red,
