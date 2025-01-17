@@ -60,8 +60,10 @@ std::vector<Shape3D*> objects;
 void Init()
 {
     objects.push_back(new CustomShape("Suzanne.obj", Vector3(0, 0, 1000), Vector3(3, 3, 3)));
-    // objects.push_back(new CustomShape("Fire_Axe_Test_3.obj", Vector3(700, 0, -900), Vector3(1, 1, 1)));
-    // objects.push_back(new CustomShape("AK_1.obj", Vector3(300, 0, -700), Vector3(3, 3, 3)));
+    objects.push_back(new CustomShape("Fire_Axe_Test_3.obj", Vector3(700, 0, -900), Vector3(1, 1, 1)));
+    objects.push_back(new CustomShape("AK_1.obj", Vector3(300, 0, -700), Vector3(3, 3, 3)));
+    objects.push_back(new CustomShape("Spaceship.obj", Vector3(100, -200, 200), Vector3(2, 2, 2)));
+
 }
 
 void Update(const float deltaTime)
@@ -160,6 +162,20 @@ void Render()
         {0, 0, 1, 0}
     };
 
+    // First calculate plane normals from projection/FoV
+    double fovRad = FoV * 3.14 / 180.0;
+    double tanFov = tan(fovRad / 2.0);
+    Vector3 nearPlaneN(0, 0, 1);  // Looking down +Z
+    Vector3 leftPlaneN(tanFov, 0, 1);
+    leftPlaneN.normalize();  // Angled left plane
+    Vector3 rightPlaneN(-tanFov, 0, 1);
+    rightPlaneN.normalize(); // Angled right plane
+    Vector3 topPlaneN(0, -tanFov, 1);
+    topPlaneN.normalize();   // Angled top plane
+    Vector3 bottomPlaneN(0, tanFov, 1);
+    bottomPlaneN.normalize(); // Angled bottom plane
+
+    // Sort triangles by depth buffer
     std::priority_queue<ScanlineTriangle, std::vector<ScanlineTriangle>, CompareTriangles> triangleQueue; 
 
     // Clipping arrays
@@ -191,8 +207,7 @@ void Render()
             }
 
             // Calculate normal for backface culling and lighting
-            Vector3 normal = (projectedVerts3D[1] - projectedVerts3D[0])
-                .cross(projectedVerts3D[2] - projectedVerts3D[0]).normalize();
+            Vector3 normal = (projectedVerts3D[1] - projectedVerts3D[0]).cross(projectedVerts3D[2] - projectedVerts3D[0]).normalize();
             if (normal.dot(projectedVerts3D[0]) < 0) continue;
 
             // Lighting calculation
@@ -203,10 +218,63 @@ void Render()
             Vector3 midPoint = Vector3::getMidpoint(translatedVertices[0], translatedVertices[1], translatedVertices[2]);
             double depth = midPoint.x * midPoint.x + midPoint.y * midPoint.y + midPoint.z * midPoint.z;
 
-            // Clip against near plane
+            // Clip against all frustum planes
+            Vector3 clippedOutput[2][2][3];  // Two buffers of [2][3] arrays
+            int currentBuffer = 0;
+
+            // Near plane clip
             int clippedTrianglesCount = Vector3::clipTriangleAgainstPlane(
-                Vector3(0, 0, zNear), Vector3(0, 0, 1),
-                projectedVerts3D, clipped);
+                Vector3(0, 0, zNear), nearPlaneN,
+                projectedVerts3D, clippedOutput[currentBuffer]);
+            if (clippedTrianglesCount == 0) continue;
+
+            // Left plane clip
+            currentBuffer = 1 - currentBuffer;
+            int newClippedCount = 0;
+            for (int i = 0; i < clippedTrianglesCount; i++) {
+                int newTriangles = Vector3::clipTriangleAgainstPlane(
+                    Vector3(0, 0, 0), leftPlaneN,
+                    clippedOutput[1 - currentBuffer][i], clippedOutput[currentBuffer]);
+                newClippedCount += newTriangles;
+            }
+            clippedTrianglesCount = newClippedCount;
+            if (clippedTrianglesCount == 0) continue;
+
+            // Right plane clip
+            currentBuffer = 1 - currentBuffer;
+            newClippedCount = 0;
+            for (int i = 0; i < clippedTrianglesCount; i++) {
+                int newTriangles = Vector3::clipTriangleAgainstPlane(
+                    Vector3(0, 0, 0), rightPlaneN,
+                    clippedOutput[1 - currentBuffer][i], clippedOutput[currentBuffer]);
+                newClippedCount += newTriangles;
+            }
+            clippedTrianglesCount = newClippedCount;
+            if (clippedTrianglesCount == 0) continue;
+
+            // Top plane clip
+            currentBuffer = 1 - currentBuffer;
+            newClippedCount = 0;
+            for (int i = 0; i < clippedTrianglesCount; i++) {
+                int newTriangles = Vector3::clipTriangleAgainstPlane(
+                    Vector3(0, 0, 0), topPlaneN,
+                    clippedOutput[1 - currentBuffer][i], clippedOutput[currentBuffer]);
+                newClippedCount += newTriangles;
+            }
+            clippedTrianglesCount = newClippedCount;
+            if (clippedTrianglesCount == 0) continue;
+
+            // Bottom plane clip (final output goes to original clipped array)
+            currentBuffer = 1 - currentBuffer;
+            newClippedCount = 0;
+            for (int i = 0; i < clippedTrianglesCount; i++) {
+                int newTriangles = Vector3::clipTriangleAgainstPlane(
+                    Vector3(0, 0, 0), bottomPlaneN,
+                    clippedOutput[1 - currentBuffer][i], clipped);
+                newClippedCount += newTriangles;
+            }
+            clippedTrianglesCount = newClippedCount;
+            if (clippedTrianglesCount == 0) continue;
 
             // Process clipped triangles
             for (int k = 0; k < clippedTrianglesCount; ++k) {
