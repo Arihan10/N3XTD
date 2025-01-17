@@ -8,6 +8,10 @@
 class CustomShape : public Shape3D {
 public:
     CustomShape(const std::string& filename, const Vector3& pos, const Vector3& size);
+    CustomShape(const std::string& filename, const Vector3& pos, const Vector3& size, const Color& col);
+
+private:
+    void LoadFromFile(const std::string& filename, const Vector3& pos, const Vector3& size);
 };
 
 #endif // CUSTOMSHAPE_H

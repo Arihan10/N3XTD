@@ -59,9 +59,9 @@ std::vector<Shape3D*> objects;
 
 void Init()
 {
-    objects.push_back(new CustomShape("Suzanne.obj", Vector3(0, 0, 1000), Vector3(3, 3, 3)));
-    // objects.push_back(new CustomShape("Fire_Axe_Test_3.obj", Vector3(700, 0, -900), Vector3(1, 1, 1)));
-    // objects.push_back(new CustomShape("AK_1.obj", Vector3(300, 0, -700), Vector3(3, 3, 3)));
+    objects.push_back(new CustomShape("Suzanne.obj", Vector3(0, 0, 1000), Vector3(3, 3, 3), Color(1.0f, 0.0f, 0.0f)));
+    objects.push_back(new CustomShape("Fire_Axe_Test_3.obj", Vector3(200, 0, 500), Vector3(1, 1, 1)));
+    objects.push_back(new CustomShape("AK_1.obj", Vector3(0, 0, 200), Vector3(3, 3, 3)));
 }
 
 void Update(const float deltaTime)
@@ -168,7 +168,8 @@ void Render()
     // Render each object
     for (Shape3D* object : objects) {
         const std::vector<int>& tris = object->getTris();
-        const std::vector<Vector3>& verts = object->getVerts();
+        const std::vector<Vector3>& verts = object->getVerts(); 
+        const std::vector<Vector3>& faceNormals = object->getNormals(); 
 
         for (size_t j = 0; j < tris.size(); j += 3) {
             Vector3 projectedVerts3D[3], translatedVertices[3];
@@ -190,23 +191,27 @@ void Render()
                 projectedVerts3D[k] = vert;
             }
 
-            // Calculate normal for backface culling and lighting
-            Vector3 normal = (projectedVerts3D[1] - projectedVerts3D[0])
-                .cross(projectedVerts3D[2] - projectedVerts3D[0]).normalize();
-            if (normal.dot(projectedVerts3D[0]) < 0) continue;
+            // Fetch normals
+            Vector3 worldNormal = faceNormals[j / 3]; 
+            
+            Vector3 viewNormal = worldNormal; 
+            viewNormal = viewNormal.multiplyMatrix(rotationY); 
+            viewNormal = viewNormal.multiplyMatrix(rotationX);
+            viewNormal = viewNormal.normalize();
+
+            // Backface culling
+            if (viewNormal.dot(projectedVerts3D[0]) < 0) continue;
 
             // Lighting calculation
-            Vector3 light = lightDir.normalize();
-            double dp = (normal.dot(light) + 1) / 2.0;
+            Vector3 light = lightDir.normalize(); 
+            double dp = (worldNormal.dot(light) + 1) / 2.0; 
 
             // Calculate midpoint for depth sorting
             Vector3 midPoint = Vector3::getMidpoint(translatedVertices[0], translatedVertices[1], translatedVertices[2]);
             double depth = midPoint.x * midPoint.x + midPoint.y * midPoint.y + midPoint.z * midPoint.z;
 
             // Clip against near plane
-            int clippedTrianglesCount = Vector3::clipTriangleAgainstPlane(
-                Vector3(0, 0, zNear), Vector3(0, 0, 1),
-                projectedVerts3D, clipped);
+            int clippedTrianglesCount = Vector3::clipTriangleAgainstPlane(Vector3(0, 0, zNear), Vector3(0, 0, 1), projectedVerts3D, clipped); 
 
             // Process clipped triangles
             for (int k = 0; k < clippedTrianglesCount; ++k) {
@@ -231,9 +236,9 @@ void Render()
 
                 // Set triangle properties
                 tri.depth = depth;
-                tri.r = dp * object->getColor().r / 255.0f;
-                tri.g = dp * object->getColor().g / 255.0f;
-                tri.b = dp * object->getColor().b / 255.0f;
+                tri.r = dp * object->getColor().r;
+                tri.g = dp * object->getColor().g;
+                tri.b = dp * object->getColor().b;
 
                 triangleQueue.push(tri);
             }
