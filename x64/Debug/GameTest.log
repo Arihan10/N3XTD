@@ -1,0 +1,15 @@
+﻿  stdafx.cpp
+  app.cpp
+  main.cpp
+  SimpleController.cpp
+  SimpleSound.cpp
+  SimpleSprite.cpp
+  GameTest.cpp
+  miniaudio.cpp
+  stb_image.cpp
+  Generating Code...
+  GameTest.vcxproj -> C:\Users\Ariha\Downloads\Ubisoft-Toronto-NEXT-2024-2025-Programming-API\API\x64\Debug\GameTest.exe
+  'pwsh.exe' is not recognized as an internal or external command,
+  operable program or batch file.
+  C:\Users\Ariha\Downloads\Ubisoft-Toronto-NEXT-2024-2025-Programming-API\API\\GameTest\glut\bin\x64\freeglut.dll
+  1 File(s) copied
