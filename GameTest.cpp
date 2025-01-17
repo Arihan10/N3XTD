@@ -17,6 +17,18 @@
 #include "Cube.h"
 #include "CustomShape.h"
 
+struct ScanlineTriangle {
+    Vector3 points[3];
+    double depth;
+    float r, g, b;
+};
+
+struct CompareTriangles {
+    bool operator()(const ScanlineTriangle& a, const ScanlineTriangle& b) {
+        return a.depth < b.depth; // Reverse order for back-to-front
+    }
+};
+
 extern int WINDOW_WIDTH;
 extern int WINDOW_HEIGHT;
 
@@ -148,6 +160,8 @@ void Render()
         {0, 0, 1, 0}
     };
 
+    std::priority_queue<ScanlineTriangle, std::vector<ScanlineTriangle>, CompareTriangles> triangleQueue; 
+
     // Clipping arrays
     Vector3 clipped[2][3];
 
@@ -172,50 +186,108 @@ void Render()
                 vert = vert.multiplyMatrix(rotationY);
                 vert = vert.multiplyMatrix(rotationX);
 
-                // Project
-                vert = vert.multiplyMatrix(perspective); 
-
                 // Store for clipping
                 projectedVerts3D[k] = vert;
             }
 
-            // Calculate normal for backface culling
-            Vector3 normal = (projectedVerts3D[1] - projectedVerts3D[0]).cross(projectedVerts3D[2] - projectedVerts3D[0]).normalize();
-            if (normal.dot(projectedVerts3D[0]) > 0) continue;
+            // Calculate normal for backface culling and lighting
+            Vector3 normal = (projectedVerts3D[1] - projectedVerts3D[0])
+                .cross(projectedVerts3D[2] - projectedVerts3D[0]).normalize();
+            if (normal.dot(projectedVerts3D[0]) < 0) continue;
+
+            // Lighting calculation
+            Vector3 light = lightDir.normalize();
+            double dp = (normal.dot(light) + 1) / 2.0;
+
+            // Calculate midpoint for depth sorting
+            Vector3 midPoint = Vector3::getMidpoint(translatedVertices[0], translatedVertices[1], translatedVertices[2]);
+            double depth = midPoint.x * midPoint.x + midPoint.y * midPoint.y + midPoint.z * midPoint.z;
 
             // Clip against near plane
-            int clippedTrianglesCount = Vector3::clipTriangleAgainstPlane(Vector3(0, 0, zNear), Vector3(0, 0, 1), projectedVerts3D, clipped);
+            int clippedTrianglesCount = Vector3::clipTriangleAgainstPlane(
+                Vector3(0, 0, zNear), Vector3(0, 0, 1),
+                projectedVerts3D, clipped);
 
             // Process clipped triangles
             for (int k = 0; k < clippedTrianglesCount; ++k) {
                 Vector3* currTri = clipped[k];
-                Vector3 screenPoints[3];
+                ScanlineTriangle tri;
 
+                // Project and convert to screen space
                 for (int l = 0; l < 3; ++l) {
-                    Vector3 vert = currTri[l]; 
+                    Vector3 vert = currTri[l];
+                    vert = vert.multiplyMatrix(perspective);
 
-                    // Perspective divide
                     if (vert.w != 0) {
                         vert.x /= (vert.w / 100.0);
                         vert.y /= (vert.w / 100.0);
                     }
 
-                    // Screen space transform
                     vert.x += WINDOW_WIDTH / 2.0;
                     vert.y += WINDOW_HEIGHT / 2.0;
 
-                    screenPoints[l] = vert;
+                    tri.points[l] = vert;
                 }
 
-                // Draw wireframe triangle
-                App::DrawLine(screenPoints[0].x, screenPoints[0].y,
-                    screenPoints[1].x, screenPoints[1].y, 1, 1, 1);
-                App::DrawLine(screenPoints[1].x, screenPoints[1].y,
-                    screenPoints[2].x, screenPoints[2].y, 1, 1, 1);
-                App::DrawLine(screenPoints[2].x, screenPoints[2].y,
-                    screenPoints[0].x, screenPoints[0].y, 1, 1, 1);
+                // Set triangle properties
+                tri.depth = depth;
+                tri.r = dp * object->getColor().r / 255.0f;
+                tri.g = dp * object->getColor().g / 255.0f;
+                tri.b = dp * object->getColor().b / 255.0f;
+
+                triangleQueue.push(tri);
             }
         }
+    }
+
+    // Render triangles back to front
+    while (!triangleQueue.empty()) {
+        const ScanlineTriangle& tri = triangleQueue.top();
+        Vector3 screenPoints[3] = { tri.points[0], tri.points[1], tri.points[2] };
+
+        // Sort points by Y coordinate for scanline
+        if (screenPoints[0].y > screenPoints[1].y) std::swap(screenPoints[0], screenPoints[1]);
+        if (screenPoints[1].y > screenPoints[2].y) std::swap(screenPoints[1], screenPoints[2]);
+        if (screenPoints[0].y > screenPoints[1].y) std::swap(screenPoints[0], screenPoints[1]);
+
+        // Scanline fill algorithm
+        // Top part of triangle
+        float slope1 = (screenPoints[1].y - screenPoints[0].y) != 0 ?
+            (screenPoints[1].x - screenPoints[0].x) / (screenPoints[1].y - screenPoints[0].y) : 0;
+        float slope2 = (screenPoints[2].y - screenPoints[0].y) != 0 ?
+            (screenPoints[2].x - screenPoints[0].x) / (screenPoints[2].y - screenPoints[0].y) : 0;
+
+        float x1 = screenPoints[0].x;
+        float x2 = screenPoints[0].x;
+
+        // Scan top half of triangle
+        for (int y = (int)screenPoints[0].y; y < (int)screenPoints[1].y; y++) {
+            if (y >= 0 && y < WINDOW_HEIGHT) {
+                float startX = x1 < x2 ? x1 : x2;
+                float endX = x1 > x2 ? x1 : x2;
+                App::DrawLine(startX, y, endX, y, tri.r, tri.g, tri.b);
+            }
+            x1 += slope1;
+            x2 += slope2;
+        }
+
+        // Bottom part of triangle
+        slope1 = (screenPoints[2].y - screenPoints[1].y) != 0 ?
+            (screenPoints[2].x - screenPoints[1].x) / (screenPoints[2].y - screenPoints[1].y) : 0;
+        x1 = screenPoints[1].x;
+
+        // Scan bottom half of triangle
+        for (int y = (int)screenPoints[1].y; y < (int)screenPoints[2].y; y++) {
+            if (y >= 0 && y < WINDOW_HEIGHT) {
+                float startX = x1 < x2 ? x1 : x2;
+                float endX = x1 > x2 ? x1 : x2;
+                App::DrawLine(startX, y, endX, y, tri.r, tri.g, tri.b);
+            }
+            x1 += slope1;
+            x2 += slope2;
+        }
+
+        triangleQueue.pop();
     }
 }
 
