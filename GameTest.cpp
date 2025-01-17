@@ -19,9 +19,7 @@
 #include "app\app.h"
 //------------------------------------------------------------------------
 
-//------------------------------------------------------------------------
 // Example data....
-//------------------------------------------------------------------------
 CSimpleSprite *testSprite;
 enum
 {
@@ -30,15 +28,10 @@ enum
 	ANIM_LEFT,
 	ANIM_RIGHT,
 };
-//------------------------------------------------------------------------
 
-//------------------------------------------------------------------------
-// Called before first update. Do any initial setup here.
-//------------------------------------------------------------------------
+// Start
 void Init()
 {
-	//------------------------------------------------------------------------
-	// Example Sprite Code....
 	testSprite = App::CreateSprite(".\\TestData\\Test.bmp", 8, 4);
 	testSprite->SetPosition(400.0f, 400.0f);
 	const float speed = 1.0f / 15.0f;
@@ -46,18 +39,13 @@ void Init()
 	testSprite->CreateAnimation(ANIM_LEFT, speed, { 8,9,10,11,12,13,14,15 });
 	testSprite->CreateAnimation(ANIM_RIGHT, speed, { 16,17,18,19,20,21,22,23 });
 	testSprite->CreateAnimation(ANIM_FORWARDS, speed, { 24,25,26,27,28,29,30,31 });
-	testSprite->SetScale(1.0f);
-	//------------------------------------------------------------------------
+	testSprite->SetScale(1.0f); 
 }
 
-//------------------------------------------------------------------------
-// Update your simulation here. deltaTime is the elapsed time since the last update in ms.
-// This will be called at no greater frequency than the value of APP_MAX_FRAME_RATE
-//------------------------------------------------------------------------
+// Update
 void Update(const float deltaTime)
 {
-	//------------------------------------------------------------------------
-	// Example Sprite Code....
+	// Example sprite code
 	testSprite->Update(deltaTime);
 	if (App::GetController().GetLeftThumbStickX() > 0.5f)
 	{
@@ -111,9 +99,8 @@ void Update(const float deltaTime)
 	{
 		testSprite->SetAnimation(-1);
 	}
-	//------------------------------------------------------------------------
-	// Sample Sound.
-	//------------------------------------------------------------------------
+
+	// Example sound
 	if (App::GetController().CheckButton(XINPUT_GAMEPAD_B, true))
 	{
 		App::PlaySound(".\\TestData\\Test.wav", true);
@@ -124,25 +111,17 @@ void Update(const float deltaTime)
 	}
 }
 
-//------------------------------------------------------------------------
 // Add your display calls here (DrawLine,Print, DrawSprite.) 
 // See App.h 
-//------------------------------------------------------------------------
 void Render()
 {	
-	//------------------------------------------------------------------------
-	// Example Sprite Code....
+	// Example Sprite Code
 	testSprite->Draw();
-	//------------------------------------------------------------------------
 
-	//------------------------------------------------------------------------
-	// Example Text.
-	//------------------------------------------------------------------------
+	// Example Text
 	App::Print(100, 100, "Sample Text");
 
-	//------------------------------------------------------------------------
-	// Example Line Drawing.
-	//------------------------------------------------------------------------
+	// Example Line Drawing
 	static float a = 0.0f;
 	const float r = 1.0f;
 	float g = 1.0f;
@@ -160,14 +139,8 @@ void Render()
 		App::DrawLine(sx, sy, ex, ey, r, g, b);
 	}
 }
-//------------------------------------------------------------------------
-// Add your shutdown code here. Called when the APP_QUIT_KEY is pressed.
-// Just before the app exits.
-//------------------------------------------------------------------------
+// OnDestroy
 void Shutdown()
-{	
-	//------------------------------------------------------------------------
-	// Example Sprite Code....
+{
 	delete testSprite;
-	//------------------------------------------------------------------------
 }
