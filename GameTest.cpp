@@ -93,7 +93,7 @@ void Init() {
     createConsoleWindow(); // Dynamically create a console window
     std::cout << "Initialization complete!" << std::endl;
 
-    /*// Create Suzanne
+    // Create Suzanne
     auto suzanne = world.createEntity();
     suzanne->addComponent(TransformComponent(Vector3(0, 0, 10), Vector3(3, 3, 3)));
     suzanne->addComponent(NameComponent("Suzanne"));
@@ -111,17 +111,17 @@ void Init() {
     auto ak = world.createEntity();
     ak->addComponent(TransformComponent(Vector3(3, 0, -7), Vector3(3, 3, 3)));
     ak->addComponent(NameComponent("AK_1"));
-    ak->addComponent(ColorComponent());
-    loadMesh(ak, "AK_1.obj");*/
+    ak->addComponent(ColorComponent(0.0, 0.0, 1.0));
+    loadMesh(ak, "AK_1.obj");
 
     auto ball = world.createEntity();
     ball->addComponent(TransformComponent(Vector3(0, 25, 0), Vector3(3, 3, 3))); 
     ball->addComponent(NameComponent("Ball")); 
-    ball->addComponent(ColorComponent(1.0f, 0.0f, 0.0f)); 
-    ball->addComponent(RigidbodyComponent(1.0f, 0.0f)); // Mass 1, high bounce
+    ball->addComponent(ColorComponent(0.0f, 1.0f, 0.0f)); 
+    ball->addComponent(RigidbodyComponent(1.0f, 0.8f)); // Mass 1, high bounce
     ball->addComponent(ColliderComponent(
         ColliderComponent::SPHERE,
-        Vector3(1, 1, 1)  // Radius of 1
+        Vector3(3, 3, 3)  // Radius of 1
     ));
     loadMesh(ball, "Sphere_Ico.obj");
 

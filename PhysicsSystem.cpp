@@ -24,7 +24,7 @@ void PhysicsSystem::update(float deltaTime) {
         transform->position = transform->position + rb->velocity * deltaTime;
 
         rb->velocity.print("");
-        std::cout << deltaTime << std::endl;
+        // std::cout << deltaTime << std::endl;
     }
 
     // Check for collisions
