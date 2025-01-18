@@ -186,14 +186,19 @@
     <ClInclude Include="App\SimpleController.h" />
     <ClInclude Include="App\SimpleSound.h" />
     <ClInclude Include="App\SimpleSprite.h" />
+    <ClInclude Include="Components.h" />
     <ClInclude Include="Cube.h" />
     <ClInclude Include="CustomShape.h" />
+    <ClInclude Include="Entity.h" />
+    <ClInclude Include="MeshLoader.h" />
     <ClInclude Include="miniaudio\miniaudio.h" />
+    <ClInclude Include="PhysicsSystem.h" />
     <ClInclude Include="Shape3D.h" />
     <ClInclude Include="stb_image\stb_image.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="Vector3.h" />
+    <ClInclude Include="World.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="App\app.cpp" />
@@ -204,7 +209,9 @@
     <ClCompile Include="Cube.cpp" />
     <ClCompile Include="CustomShape.cpp" />
     <ClCompile Include="GameTest.cpp" />
+    <ClCompile Include="MeshLoader.cpp" />
     <ClCompile Include="miniaudio\miniaudio.cpp" />
+    <ClCompile Include="PhysicsSystem.cpp" />
     <ClCompile Include="Shape3D.cpp" />
     <ClCompile Include="stb_image\stb_image.cpp" />
     <ClCompile Include="stdafx.cpp">

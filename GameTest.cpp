@@ -1,6 +1,3 @@
-///////////////////////////////////////////////////////////////////////////////
-// GameTest.cpp - 3D Wireframe Renderer
-///////////////////////////////////////////////////////////////////////////////
 #include "stdafx.h"
 #include <windows.h>
 #include <math.h>
@@ -11,11 +8,31 @@
 #include <string>
 #include <functional>
 #include <algorithm>
-#include "app\app.h"
+#include "app/app.h"
 #include "Vector3.h"
-#include "Shape3D.h"
-#include "Cube.h"
-#include "CustomShape.h"
+#include "Components.h"
+#include "World.h"
+#include "MeshLoader.h"
+#include "PhysicsSystem.h"
+
+#include <stdio.h>
+#include <fcntl.h>
+
+void createConsoleWindow() {
+    // Allocate a console
+    AllocConsole();
+
+    // Redirect standard output streams to the console
+    FILE* fileStream;
+    freopen_s(&fileStream, "CONOUT$", "w", stdout); // Redirect stdout
+    freopen_s(&fileStream, "CONOUT$", "w", stderr); // Redirect stderr
+    freopen_s(&fileStream, "CONIN$", "r", stdin);  // Redirect stdin
+
+    // Set the console title
+    SetConsoleTitle(L"Debug Console");
+
+    std::cout << "Console window successfully created!" << std::endl;
+}
 
 struct ScanlineTriangle {
     Vector3 points[3];
@@ -42,9 +59,9 @@ double angleX = 0.0;
 double FoV = 20.0;
 double zFar = 80.0;
 double zNear = 2.0;
-double moveSpeed = 2.0;
-double mouseSensitivityX = 0.000004;
-double mouseSensitivityY = 0.000003;
+double moveSpeed = 2000.0;
+double mouseSensitivityX = 0.004;
+double mouseSensitivityY = 0.003;
 double deltaX = 0.0;
 double deltaY = 0.0;
 float lastMouseX = 0;
@@ -54,29 +71,94 @@ float lastMouseY = 0;
 bool dirs[10] = { false };
 bool movingCamera = false;
 
-// Objects in the scene
-std::vector<Shape3D*> objects;
+// World instance
+World world;
 
-void Init()
-{
-    objects.push_back(new CustomShape("Suzanne.obj", Vector3(0, 0, 1000), Vector3(3, 3, 3), Color(1.0f, 0.0f, 0.0f)));
-    objects.push_back(new CustomShape("Fire_Axe_Test_3.obj", Vector3(200, 0, 500), Vector3(1, 1, 1)));
-    objects.push_back(new CustomShape("AK_1.obj", Vector3(0, 0, 200), Vector3(3, 3, 3)));
+// Physics system
+PhysicsSystem physicsSystem(world); 
+
+void loadMesh(std::shared_ptr<Entity> entity, const std::string& filename) {
+    MeshComponent mesh;
+    MeshLoader::LoadFromFile(filename, mesh.originalVertices, mesh.triangles);
+
+    auto transform = entity->getComponent<TransformComponent>();
+    if (transform) {
+        mesh.updateTransform(transform->position, transform->scale);
+    }
+
+    entity->addComponent(mesh);
 }
 
-void Update(const float deltaTime)
-{
+void Init() {
+    createConsoleWindow(); // Dynamically create a console window
+    std::cout << "Initialization complete!" << std::endl;
+
+    // Create Suzanne
+    auto suzanne = world.createEntity();
+    suzanne->addComponent(TransformComponent(Vector3(0, 0, 1000), Vector3(3, 3, 3)));
+    suzanne->addComponent(NameComponent("Suzanne"));
+    suzanne->addComponent(ColorComponent(1.0f, 0.0f, 0.0f));
+    loadMesh(suzanne, "Suzanne.obj");
+
+    // Create Fire Axe
+    auto fireAxe = world.createEntity();
+    fireAxe->addComponent(TransformComponent(Vector3(700, 0, -900), Vector3(1, 1, 1)));
+    fireAxe->addComponent(NameComponent("Fire_Axe"));
+    fireAxe->addComponent(ColorComponent());
+    loadMesh(fireAxe, "Fire_Axe_Test_3.obj");
+
+    // Create AK
+    auto ak = world.createEntity();
+    ak->addComponent(TransformComponent(Vector3(300, 0, -700), Vector3(3, 3, 3)));
+    ak->addComponent(NameComponent("AK_1"));
+    ak->addComponent(ColorComponent());
+    loadMesh(ak, "AK_1.obj");
+
+    /*// Create a bouncing ball
+    auto ball = world.createEntity();
+    ball->addComponent(TransformComponent(Vector3(0, 500, 0))); 
+    ball->addComponent(NameComponent("Balls")); 
+    ball->addComponent(RigidbodyComponent(1.0f, 0.8f)); // Mass 1, high bounce
+    ball->addComponent(ColliderComponent(
+        ColliderComponent::SPHERE,
+        Vector3(1, 1, 1)  // Radius of 1
+    ));*/
+    // loadMesh(ball, "Suzanne.obj"); 
+
+    auto ball = world.createEntity();
+    ball->addComponent(TransformComponent(Vector3(0, 0, 0), Vector3(3, 3, 3))); 
+    ball->addComponent(NameComponent("Ball")); 
+    ball->addComponent(ColorComponent(1.0f, 0.0f, 0.0f)); 
+    ball->addComponent(RigidbodyComponent(1.0f, 0.8f)); // Mass 1, high bounce
+    ball->addComponent(ColliderComponent(
+        ColliderComponent::SPHERE,
+        Vector3(1, 1, 1)  // Radius of 1
+    ));
+    loadMesh(ball, "Sphere_Ico.obj");
+
+    /*// Create ground
+    auto ground = world.createEntity();
+    ground->addComponent(TransformComponent(Vector3(0, -500, 0)));
+    ground->addComponent(RigidbodyComponent(1.0f, 0.5f, true)); // Static object
+    ground->addComponent(ColliderComponent(
+        ColliderComponent::BOX,
+        Vector3(10, 0.1, 10)  // Thin box
+    ));*/
+}
+
+void Update(const float deltaTime) {
+    float _deltaTime = deltaTime / 1000.0; 
+
     // Input handling
-    dirs[2] = App::IsKeyPressed('W'); 
-    dirs[3] = App::IsKeyPressed('S'); 
-    dirs[4] = App::IsKeyPressed('A'); 
-    dirs[5] = App::IsKeyPressed('D'); 
+    dirs[2] = App::IsKeyPressed('W');
+    dirs[3] = App::IsKeyPressed('S');
+    dirs[4] = App::IsKeyPressed('A');
+    dirs[5] = App::IsKeyPressed('D');
     dirs[0] = App::IsKeyPressed('E'); // up
     dirs[1] = App::IsKeyPressed('Q'); // down
 
     bool currentMovingCamera = App::IsKeyPressed(VK_SHIFT);
     if (currentMovingCamera && !movingCamera) {
-        // First frame of camera movement
         movingCamera = true;
     }
     movingCamera = currentMovingCamera;
@@ -90,50 +172,55 @@ void Update(const float deltaTime)
         float mouseX, mouseY;
         App::GetMousePos(mouseX, mouseY);
 
-        // Calculate delta from last frame's position
         deltaX = (mouseX - lastMouseX) * WINDOW_WIDTH / 2;
         deltaY = (mouseY - lastMouseY) * WINDOW_HEIGHT / 2;
 
-        // Store current position for next frame
         lastMouseX = mouseX;
         lastMouseY = mouseY;
 
-        // Camera movement
-        angleY -= deltaX * deltaTime * mouseSensitivityX;
-        angleX += deltaY * deltaTime * mouseSensitivityY;
+        angleY -= deltaX * _deltaTime * mouseSensitivityX;
+        angleX += deltaY * _deltaTime * mouseSensitivityY;
 
-        if (dirs[0]) camPos.y += moveSpeed * deltaTime;
-        if (dirs[1]) camPos.y -= moveSpeed * deltaTime;
+        if (dirs[0]) camPos.y += moveSpeed * _deltaTime;
+        if (dirs[1]) camPos.y -= moveSpeed * _deltaTime;
         if (dirs[2]) {
-            camPos.x += sin(-angleY) * moveSpeed * deltaTime;
-            camPos.z += cos(-angleY) * moveSpeed * deltaTime;
+            camPos.x += sin(-angleY) * moveSpeed * _deltaTime;
+            camPos.z += cos(-angleY) * moveSpeed * _deltaTime;
         }
         if (dirs[3]) {
-            camPos.x -= sin(-angleY) * moveSpeed * deltaTime;
-            camPos.z -= cos(-angleY) * moveSpeed * deltaTime;
+            camPos.x -= sin(-angleY) * moveSpeed * _deltaTime;
+            camPos.z -= cos(-angleY) * moveSpeed * _deltaTime;
         }
         if (dirs[4]) {
-            camPos.x -= sin(-angleY + 3.14 / 2) * moveSpeed * deltaTime;
-            camPos.z -= cos(-angleY + 3.14 / 2) * moveSpeed * deltaTime;
+            camPos.x -= sin(-angleY + 3.14 / 2) * moveSpeed * _deltaTime;
+            camPos.z -= cos(-angleY + 3.14 / 2) * moveSpeed * _deltaTime;
         }
         if (dirs[5]) {
-            camPos.x += sin(-angleY + 3.14 / 2) * moveSpeed * deltaTime;
-            camPos.z += cos(-angleY + 3.14 / 2) * moveSpeed * deltaTime;
+            camPos.x += sin(-angleY + 3.14 / 2) * moveSpeed * _deltaTime;
+            camPos.z += cos(-angleY + 3.14 / 2) * moveSpeed * _deltaTime;
         }
     }
     else {
-        // Reset deltas when not moving camera
         deltaX = 0;
         deltaY = 0;
-
-        // Get current mouse position so we don't get a huge delta
-        // when starting camera movement
         App::GetMousePos(lastMouseX, lastMouseY);
     }
+
+    // Update mesh transforms
+    for (const auto& entity : world.getEntities()) {
+        auto transform = entity->getComponent<TransformComponent>();
+        // transform->position = transform->position + Vector3(1, 1, 1, 1); 
+        auto mesh = entity->getComponent<MeshComponent>();
+
+        if (transform && mesh) {
+            mesh->updateTransform(transform->position, transform->scale);
+        }
+    }
+
+    physicsSystem.update(_deltaTime); 
 }
 
-void Render()
-{
+void Render() {
     // Rotation matrices
     double rotationX[4][4] = {
         {1, 0, 0, 0},
@@ -160,16 +247,21 @@ void Render()
         {0, 0, 1, 0}
     };
 
-    std::priority_queue<ScanlineTriangle, std::vector<ScanlineTriangle>, CompareTriangles> triangleQueue; 
+    std::priority_queue<ScanlineTriangle, std::vector<ScanlineTriangle>, CompareTriangles> triangleQueue;
 
     // Clipping arrays
     Vector3 clipped[2][3];
 
-    // Render each object
-    for (Shape3D* object : objects) {
-        const std::vector<int>& tris = object->getTris();
-        const std::vector<Vector3>& verts = object->getVerts(); 
-        const std::vector<Vector3>& faceNormals = object->getNormals(); 
+    // Render each entity with required components
+    for (const auto& entity : world.getEntities()) {
+        auto mesh = entity->getComponent<MeshComponent>();
+        auto color = entity->getComponent<ColorComponent>();
+
+        if (!mesh || !color) continue;
+
+        const auto& verts = mesh->vertices;
+        const auto& tris = mesh->triangles;
+        const auto& normals = mesh->normals;
 
         for (size_t j = 0; j < tris.size(); j += 3) {
             Vector3 projectedVerts3D[3], translatedVertices[3];
@@ -192,10 +284,10 @@ void Render()
             }
 
             // Fetch normals
-            Vector3 worldNormal = faceNormals[j / 3]; 
-            
-            Vector3 viewNormal = worldNormal; 
-            viewNormal = viewNormal.multiplyMatrix(rotationY); 
+            Vector3 worldNormal = normals[j / 3];
+
+            Vector3 viewNormal = worldNormal;
+            viewNormal = viewNormal.multiplyMatrix(rotationY);
             viewNormal = viewNormal.multiplyMatrix(rotationX);
             viewNormal = viewNormal.normalize();
 
@@ -203,15 +295,15 @@ void Render()
             if (viewNormal.dot(projectedVerts3D[0]) < 0) continue;
 
             // Lighting calculation
-            Vector3 light = lightDir.normalize(); 
-            double dp = (worldNormal.dot(light) + 1) / 2.0; 
+            Vector3 light = lightDir.normalize();
+            double dp = (worldNormal.dot(light) + 1) / 2.0;
 
             // Calculate midpoint for depth sorting
             Vector3 midPoint = Vector3::getMidpoint(translatedVertices[0], translatedVertices[1], translatedVertices[2]);
             double depth = midPoint.x * midPoint.x + midPoint.y * midPoint.y + midPoint.z * midPoint.z;
 
             // Clip against near plane
-            int clippedTrianglesCount = Vector3::clipTriangleAgainstPlane(Vector3(0, 0, zNear), Vector3(0, 0, 1), projectedVerts3D, clipped); 
+            int clippedTrianglesCount = Vector3::clipTriangleAgainstPlane(Vector3(0, 0, zNear), Vector3(0, 0, 1), projectedVerts3D, clipped);
 
             // Process clipped triangles
             for (int k = 0; k < clippedTrianglesCount; ++k) {
@@ -236,9 +328,9 @@ void Render()
 
                 // Set triangle properties
                 tri.depth = depth;
-                tri.r = dp * object->getColor().r;
-                tri.g = dp * object->getColor().g;
-                tri.b = dp * object->getColor().b;
+                tri.r = dp * color->r;
+                tri.g = dp * color->g;  
+                tri.b = dp * color->b;
 
                 triangleQueue.push(tri);
             }
@@ -298,7 +390,5 @@ void Render()
 
 void Shutdown()
 {
-    for (Shape3D* obj : objects) {
-        delete obj;
-    }
+    world.clear();
 }

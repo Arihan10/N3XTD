@@ -28,6 +28,8 @@
     <ClCompile Include="Cube.cpp" />
     <ClCompile Include="Shape3D.cpp" />
     <ClCompile Include="Vector3.cpp" />
+    <ClCompile Include="MeshLoader.cpp" />
+    <ClCompile Include="PhysicsSystem.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h" />
@@ -62,6 +64,11 @@
     <ClInclude Include="Cube.h" />
     <ClInclude Include="Shape3D.h" />
     <ClInclude Include="Vector3.h" />
+    <ClInclude Include="Components.h" />
+    <ClInclude Include="Entity.h" />
+    <ClInclude Include="World.h" />
+    <ClInclude Include="MeshLoader.h" />
+    <ClInclude Include="PhysicsSystem.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="API">
