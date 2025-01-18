@@ -71,12 +71,27 @@ struct ColliderComponent {
 struct RigidbodyComponent {
     Vector3 velocity;
     Vector3 acceleration;
+    Vector3 angularVelocity;    // Added for ball spin
     float mass;
-    float restitution; // Bounciness
-    bool isStatic; // Static objects don't move
+    float restitution;          // Bounciness
+    float friction;             // Ground friction coefficient
+    float airResistance;        // Air drag coefficient
+    bool isStatic;             // Static objects don't move
 
-    RigidbodyComponent(float m = 1.0f, float r = 0.5f, bool stat = false)
-        : velocity(0,0,0,0), acceleration(), mass(m), restitution(r), isStatic(stat) {}
+    RigidbodyComponent(
+        float m = 1.0f,
+        float r = 0.5f,
+        float f = 0.1f,
+        float air = 0.02f,
+        bool stat = false
+    ) : velocity(0, 0, 0, 0),
+        acceleration(),
+        angularVelocity(0, 0, 0, 0),
+        mass(m),
+        restitution(r),
+        friction(f),
+        airResistance(air),
+        isStatic(stat) {}
 };
 
 #endif

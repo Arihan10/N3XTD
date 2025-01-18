@@ -77,6 +77,13 @@ World world;
 // Physics system
 PhysicsSystem physicsSystem(world); 
 
+// Global object declarations
+std::shared_ptr<Entity> suzanne; 
+std::shared_ptr<Entity> fireAxe; 
+std::shared_ptr<Entity> ak; 
+std::shared_ptr<Entity> ball; 
+std::shared_ptr<Entity> ground; 
+
 void loadMesh(std::shared_ptr<Entity> entity, const std::string& filename) {
     MeshComponent mesh;
     MeshLoader::LoadFromFile(filename, mesh.originalVertices, mesh.triangles);
@@ -94,46 +101,46 @@ void Init() {
     std::cout << "Initialization complete!" << std::endl;
 
     // Create Suzanne
-    auto suzanne = world.createEntity();
+    suzanne = world.createEntity();
     suzanne->addComponent(TransformComponent(Vector3(0, 0, 10), Vector3(3, 3, 3)));
     suzanne->addComponent(NameComponent("Suzanne"));
-    suzanne->addComponent(ColorComponent(1.0f, 0.0f, 0.0f));
+    suzanne->addComponent(ColorComponent(1.0f, 1.0f, 0.0f));
     loadMesh(suzanne, "Suzanne.obj");
 
     // Create Fire Axe
-    auto fireAxe = world.createEntity();
+    fireAxe = world.createEntity();
     fireAxe->addComponent(TransformComponent(Vector3(7, 0, -9), Vector3(1, 1, 1)));
     fireAxe->addComponent(NameComponent("Fire_Axe"));
-    fireAxe->addComponent(ColorComponent());
+    fireAxe->addComponent(ColorComponent(1.0, 0.0, 0.0));
     loadMesh(fireAxe, "Fire_Axe_Test_3.obj");
 
     // Create AK
-    auto ak = world.createEntity();
+    ak = world.createEntity();
     ak->addComponent(TransformComponent(Vector3(3, 0, -7), Vector3(3, 3, 3)));
     ak->addComponent(NameComponent("AK_1"));
     ak->addComponent(ColorComponent(0.0, 0.0, 1.0));
     loadMesh(ak, "AK_1.obj");
 
-    auto ball = world.createEntity();
-    ball->addComponent(TransformComponent(Vector3(0, 25, 0), Vector3(3, 3, 3))); 
+    ball = world.createEntity();
+    ball->addComponent(TransformComponent(Vector3(0, 25, 0), Vector3(2, 2, 2))); 
     ball->addComponent(NameComponent("Ball")); 
-    ball->addComponent(ColorComponent(0.0f, 1.0f, 0.0f)); 
-    ball->addComponent(RigidbodyComponent(1.0f, 0.8f)); // Mass 1, high bounce
+    ball->addComponent(ColorComponent(1.0f, 1.0f, 1.0f)); 
+    ball->addComponent(RigidbodyComponent(1.0f, 0.6f, 0.02f, 0.001f)); // Mass 1, high bounce
     ball->addComponent(ColliderComponent(
         ColliderComponent::SPHERE,
-        Vector3(3, 3, 3)  // Radius of 1
+        Vector3(2, 2, 2)  // Radius of 1
     ));
     loadMesh(ball, "Sphere_Ico.obj");
 
     // Create ground
-    auto ground = world.createEntity();
-    ground->addComponent(TransformComponent(Vector3(0, -25, 0), Vector3(10, 0.1, 10))); 
+    ground = world.createEntity();
+    ground->addComponent(TransformComponent(Vector3(0, -25, 0), Vector3(15, 0.1, 15))); 
     ground->addComponent(NameComponent("Ground")); 
-    ground->addComponent(ColorComponent(1.0f, 0.0f, 0.0f)); 
-    ground->addComponent(RigidbodyComponent(1.0f, 0.5f, true)); // Static object
+    ground->addComponent(ColorComponent(0.0f, 1.0f, 0.0f)); 
+    ground->addComponent(RigidbodyComponent(1.0f, 0.5f, 0.02f, 0.001f, true)); // Static object
     ground->addComponent(ColliderComponent(
         ColliderComponent::BOX,
-        Vector3(10, 0.1, 10)  // Thin box
+        Vector3(15, 0.1, 15)  // Thin box
     ));
     loadMesh(ground, "Cube.obj"); 
 }
@@ -210,6 +217,12 @@ void Update(const float deltaTime) {
     }
 
     physicsSystem.update(_deltaTime); 
+
+    /*if (App::IsKeyPressed('F')) {
+        Vector3 hitPoint = ball->getComponent<TransformComponent>()->position + Vector3(0, -0.2, 0); // Slightly below center
+        Vector3 clubForce = Vector3(forwardDir.x * power, upAngle * power, forwardDir.z * power); 
+        physicsSystem.applyForce(ball.get(), clubForce, hitPoint); 
+    }*/
 }
 
 void Render() {
