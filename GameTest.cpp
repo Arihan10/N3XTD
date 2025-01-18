@@ -56,10 +56,10 @@ Vector3 lightDir(0.0, -1.0, -0.5);
 // Camera rotation angles
 double angleY = 0.0;
 double angleX = 0.0;
-double FoV = 20.0;
-double zFar = 80.0;
-double zNear = 2.0;
-double moveSpeed = 2000.0;
+double FoV = 25.0;
+double zFar = 100;
+double zNear = 0.1;
+double moveSpeed = 20.0;
 double mouseSensitivityX = 0.004;
 double mouseSensitivityY = 0.003;
 double deltaX = 0.0;
@@ -93,57 +93,49 @@ void Init() {
     createConsoleWindow(); // Dynamically create a console window
     std::cout << "Initialization complete!" << std::endl;
 
-    // Create Suzanne
+    /*// Create Suzanne
     auto suzanne = world.createEntity();
-    suzanne->addComponent(TransformComponent(Vector3(0, 0, 1000), Vector3(3, 3, 3)));
+    suzanne->addComponent(TransformComponent(Vector3(0, 0, 10), Vector3(3, 3, 3)));
     suzanne->addComponent(NameComponent("Suzanne"));
     suzanne->addComponent(ColorComponent(1.0f, 0.0f, 0.0f));
     loadMesh(suzanne, "Suzanne.obj");
 
     // Create Fire Axe
     auto fireAxe = world.createEntity();
-    fireAxe->addComponent(TransformComponent(Vector3(700, 0, -900), Vector3(1, 1, 1)));
+    fireAxe->addComponent(TransformComponent(Vector3(7, 0, -9), Vector3(1, 1, 1)));
     fireAxe->addComponent(NameComponent("Fire_Axe"));
     fireAxe->addComponent(ColorComponent());
     loadMesh(fireAxe, "Fire_Axe_Test_3.obj");
 
     // Create AK
     auto ak = world.createEntity();
-    ak->addComponent(TransformComponent(Vector3(300, 0, -700), Vector3(3, 3, 3)));
+    ak->addComponent(TransformComponent(Vector3(3, 0, -7), Vector3(3, 3, 3)));
     ak->addComponent(NameComponent("AK_1"));
     ak->addComponent(ColorComponent());
-    loadMesh(ak, "AK_1.obj");
-
-    /*// Create a bouncing ball
-    auto ball = world.createEntity();
-    ball->addComponent(TransformComponent(Vector3(0, 500, 0))); 
-    ball->addComponent(NameComponent("Balls")); 
-    ball->addComponent(RigidbodyComponent(1.0f, 0.8f)); // Mass 1, high bounce
-    ball->addComponent(ColliderComponent(
-        ColliderComponent::SPHERE,
-        Vector3(1, 1, 1)  // Radius of 1
-    ));*/
-    // loadMesh(ball, "Suzanne.obj"); 
+    loadMesh(ak, "AK_1.obj");*/
 
     auto ball = world.createEntity();
-    ball->addComponent(TransformComponent(Vector3(0, 0, 0), Vector3(3, 3, 3))); 
+    ball->addComponent(TransformComponent(Vector3(0, 25, 0), Vector3(3, 3, 3))); 
     ball->addComponent(NameComponent("Ball")); 
     ball->addComponent(ColorComponent(1.0f, 0.0f, 0.0f)); 
-    ball->addComponent(RigidbodyComponent(1.0f, 0.8f)); // Mass 1, high bounce
+    ball->addComponent(RigidbodyComponent(1.0f, 0.0f)); // Mass 1, high bounce
     ball->addComponent(ColliderComponent(
         ColliderComponent::SPHERE,
         Vector3(1, 1, 1)  // Radius of 1
     ));
     loadMesh(ball, "Sphere_Ico.obj");
 
-    /*// Create ground
+    // Create ground
     auto ground = world.createEntity();
-    ground->addComponent(TransformComponent(Vector3(0, -500, 0)));
+    ground->addComponent(TransformComponent(Vector3(0, -25, 0), Vector3(10, 0.1, 10))); 
+    ground->addComponent(NameComponent("Ground")); 
+    ground->addComponent(ColorComponent(1.0f, 0.0f, 0.0f)); 
     ground->addComponent(RigidbodyComponent(1.0f, 0.5f, true)); // Static object
     ground->addComponent(ColliderComponent(
         ColliderComponent::BOX,
         Vector3(10, 0.1, 10)  // Thin box
-    ));*/
+    ));
+    loadMesh(ground, "Cube.obj"); 
 }
 
 void Update(const float deltaTime) {
@@ -237,12 +229,12 @@ void Render() {
     };
 
     // Projection matrix
-    double FoVScale = 1 / tan(FoV * 3.14 / 180.0 / 2.0);
+    double FoVScale = 1 / tan(FoV * 3.14 / 180.0 / 2.0); 
     double normalization = zFar / (zFar - zNear);
     double lambda = (-zFar * zNear) / (zFar - zNear);
     double perspective[4][4] = {
-        {FoVScale, 0, 0, 0},
-        {0, FoVScale, 0, 0},
+        {FoVScale * 100, 0, 0, 0},
+        {0, FoVScale * 100, 0, 0},
         {0, 0, normalization, lambda},
         {0, 0, 1, 0}
     };
@@ -316,8 +308,8 @@ void Render() {
                     vert = vert.multiplyMatrix(perspective);
 
                     if (vert.w != 0) {
-                        vert.x /= (vert.w / 100.0);
-                        vert.y /= (vert.w / 100.0);
+                        vert.x /= (vert.w);
+                        vert.y /= (vert.w);
                     }
 
                     vert.x += WINDOW_WIDTH / 2.0;

@@ -49,7 +49,7 @@ struct MeshComponent {
     void updateTransform(const Vector3& position, const Vector3& scale) {
         vertices.resize(originalVertices.size());
         for (size_t i = 0; i < originalVertices.size(); ++i) {
-            vertices[i] = originalVertices[i] * (scale * 50.0) + position;
+            vertices[i] = originalVertices[i] * (scale) + position;
         }
         calculateNormals();
     }

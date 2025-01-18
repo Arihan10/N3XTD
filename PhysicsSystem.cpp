@@ -28,7 +28,7 @@ void PhysicsSystem::update(float deltaTime) {
     }
 
     // Check for collisions
-    /*for (size_t i = 0; i < entities.size(); i++) {
+    for (size_t i = 0; i < entities.size(); i++) {
         for (size_t j = i + 1; j < entities.size(); j++) {
             auto entity1 = entities[i];
             auto entity2 = entities[j];
@@ -52,6 +52,20 @@ void PhysicsSystem::update(float deltaTime) {
                     trans1->position + col1->offset, col1->size.x,
                     trans2->position + col2->offset, col2->size.x,
                     normal, depth);
+            }
+            else if (col1->type == ColliderComponent::SPHERE && col2->type == ColliderComponent::BOX) {
+                collision = checkSphereBoxCollision(
+                    trans1->position + col1->offset, col1->size.x,
+                    trans2->position + col2->offset, col2->size,
+                    normal, depth);
+            }
+            else if (col1->type == ColliderComponent::BOX && col2->type == ColliderComponent::SPHERE) {
+                // Swap order and negate normal if box comes first
+                collision = checkSphereBoxCollision(
+                    trans2->position + col2->offset, col2->size.x,
+                    trans1->position + col1->offset, col1->size,
+                    normal, depth);
+                normal = normal * -1.0f;
             }
             // Add other collision checks here
 
@@ -88,7 +102,7 @@ void PhysicsSystem::update(float deltaTime) {
                 }
             }
         }
-    }*/
+    }
 }
 
 bool PhysicsSystem::checkSphereSphereCollision(
@@ -104,5 +118,43 @@ bool PhysicsSystem::checkSphereSphereCollision(
 
     normal = delta.normalize();
     depth = minDistance - distance;
+    return true;
+}
+
+bool PhysicsSystem::checkSphereBoxCollision(
+    const Vector3& spherePos, float radius,
+    const Vector3& boxPos, const Vector3& boxHalfSize,
+    Vector3& normal, float& depth) {
+
+    // Find the closest point on the box to the sphere center
+    Vector3 closestPoint;
+
+    // Clamp sphere center to box bounds on each axis
+    closestPoint.x = std::max(boxPos.x - boxHalfSize.x,
+        std::min(spherePos.x, boxPos.x + boxHalfSize.x));
+    closestPoint.y = std::max(boxPos.y - boxHalfSize.y,
+        std::min(spherePos.y, boxPos.y + boxHalfSize.y));
+    closestPoint.z = std::max(boxPos.z - boxHalfSize.z,
+        std::min(spherePos.z, boxPos.z + boxHalfSize.z));
+
+    Vector3 delta = spherePos - closestPoint;
+    float distanceSquared = delta.x * delta.x + delta.y * delta.y + delta.z * delta.z;
+
+    // If distance is greater than radius, no collision
+    if (distanceSquared > radius * radius) return false;
+
+    float distance = sqrt(distanceSquared);
+
+    // Avoid division by zero if sphere is exactly on surface
+    if (distance == 0.0f) {
+        // Sphere center is exactly on box surface - choose arbitrary normal
+        normal = Vector3(0, 1, 0);
+        depth = radius;
+    }
+    else {
+        normal = delta / distance; // Normalize
+        depth = radius - distance;
+    }
+
     return true;
 }
