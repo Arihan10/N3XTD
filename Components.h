@@ -8,10 +8,14 @@
 
 struct TransformComponent {
     Vector3 position;
+    Vector3 rotation;  // Rotation in radians (x=pitch, y=yaw, z=roll)
     Vector3 scale;
 
-    TransformComponent(const Vector3& pos = Vector3(), const Vector3& scl = Vector3(1, 1, 1))
-        : position(pos), scale(scl) {}
+    TransformComponent(
+        const Vector3& pos = Vector3(0,0,0),
+        const Vector3& rot = Vector3(0,0,0),
+        const Vector3& scl = Vector3(1, 1, 1)
+    ) : position(pos), rotation(rot), scale(scl) {}
 };
 
 struct NameComponent {
@@ -36,21 +40,60 @@ struct MeshComponent {
     void calculateNormals() {
         normals.clear();
         normals.resize(triangles.size() / 3);
-
         for (size_t i = 0; i < triangles.size(); i += 3) {
-            Vector3 v0 = originalVertices[triangles[i]];
+            /*Vector3 v0 = originalVertices[triangles[i]];
             Vector3 v1 = originalVertices[triangles[i + 1]];
-            Vector3 v2 = originalVertices[triangles[i + 2]];
+            Vector3 v2 = originalVertices[triangles[i + 2]];*/
+            Vector3 v0 = vertices[triangles[i]]; 
+            Vector3 v1 = vertices[triangles[i + 1]]; 
+            Vector3 v2 = vertices[triangles[i + 2]]; 
             Vector3 normal = (v1 - v0).cross(v2 - v0).normalize();
             normals[i / 3] = normal;
         }
     }
 
-    void updateTransform(const Vector3& position, const Vector3& scale) {
+    void updateTransform(const Vector3& position, const Vector3& rotation, const Vector3& scale) {
         vertices.resize(originalVertices.size());
+
+        // Convert degrees to radians
+        const double DEG_TO_RAD = 3.14159265359 / 180.0;
+        Vector3 rotationRad = rotation * DEG_TO_RAD;
+
+        // Create rotation matrices (using radians)
+        double rotX[4][4] = {
+            {1, 0, 0, 0},
+            {0, cos(rotationRad.x), -sin(rotationRad.x), 0},
+            {0, sin(rotationRad.x), cos(rotationRad.x), 0},
+            {0, 0, 0, 1}
+        };
+
+        double rotY[4][4] = {
+            {cos(rotationRad.y), 0, sin(rotationRad.y), 0},
+            {0, 1, 0, 0},
+            {-sin(rotationRad.y), 0, cos(rotationRad.y), 0},
+            {0, 0, 0, 1}
+        };
+
+        double rotZ[4][4] = {
+            {cos(rotationRad.z), -sin(rotationRad.z), 0, 0},
+            {sin(rotationRad.z), cos(rotationRad.z), 0, 0},
+            {0, 0, 1, 0},
+            {0, 0, 0, 1}
+        };
+
         for (size_t i = 0; i < originalVertices.size(); ++i) {
-            vertices[i] = originalVertices[i] * (scale) + position;
+            // Start with scaled vertex
+            Vector3 transformed = originalVertices[i] * scale;
+
+            // Apply rotations in order: Z, X, Y
+            transformed = transformed.multiplyMatrix(rotZ);
+            transformed = transformed.multiplyMatrix(rotX);
+            transformed = transformed.multiplyMatrix(rotY);
+
+            // Finally apply translation
+            vertices[i] = transformed + position;
         }
+
         calculateNormals();
     }
 };

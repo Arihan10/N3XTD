@@ -190,6 +190,7 @@
     <ClInclude Include="Cube.h" />
     <ClInclude Include="CustomShape.h" />
     <ClInclude Include="Entity.h" />
+    <ClInclude Include="KeyTracker.h" />
     <ClInclude Include="MeshLoader.h" />
     <ClInclude Include="miniaudio\miniaudio.h" />
     <ClInclude Include="PhysicsSystem.h" />
@@ -209,6 +210,7 @@
     <ClCompile Include="Cube.cpp" />
     <ClCompile Include="CustomShape.cpp" />
     <ClCompile Include="GameTest.cpp" />
+    <ClCompile Include="KeyTracker.cpp" />
     <ClCompile Include="MeshLoader.cpp" />
     <ClCompile Include="miniaudio\miniaudio.cpp" />
     <ClCompile Include="PhysicsSystem.cpp" />

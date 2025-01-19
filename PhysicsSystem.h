@@ -7,44 +7,69 @@
 #include "Entity.h"
 #include "Components.h"
 
+// Structure to represent an oriented box for collision
+struct OrientedBox {
+    Vector3 center;
+    Vector3 halfExtents;
+    Vector3 axisX;  // Local right axis after rotation
+    Vector3 axisY;  // Local up axis after rotation
+    Vector3 axisZ;  // Local forward axis after rotation
+
+    OrientedBox(const Vector3& pos, const Vector3& size, const Vector3& rotation);
+    Vector3 getVertex(int i) const;  // Get box vertex in world space
+    void getMinMaxOnAxis(const Vector3& axis, float& min, float& max) const;
+};
+
 class PhysicsSystem {
 private:
     World& world;
-    float gravity = -9.81f * 10;
+    float gravity = -9.81f * 4;
 
-    // Collision detection methods
+    // Helper methods for collision detection
     bool checkSphereSphereCollision(
         const Vector3& pos1, float radius1,
         const Vector3& pos2, float radius2,
         Vector3& normal, float& depth);
 
-    bool checkBoxBoxCollision(
-        const Vector3& pos1, const Vector3& size1,
-        const Vector3& pos2, const Vector3& size2,
-        Vector3& normal, float& depth);
-
-    bool checkSphereBoxCollision(
+    bool checkSphereOBBCollision(
         const Vector3& spherePos, float radius,
-        const Vector3& boxPos, const Vector3& boxSize,
+        const OrientedBox& box,
         Vector3& normal, float& depth);
 
-    // Collision response helper
+    bool checkOBBOBBCollision(
+        const OrientedBox& box1,
+        const OrientedBox& box2,
+        Vector3& normal, float& depth);
+
+    // Separating Axis Test helper
+    bool testAxis(
+        const Vector3& axis,
+        const OrientedBox& box1,
+        const OrientedBox& box2,
+        float& depth,
+        bool& shouldFlip);
+
+    // Transform matrix creation for rotations
+    void createRotationMatrix(const Vector3& rotation, double matrix[4][4]);
+
+    // Collision response helpers
     void handleStaticCollision(
         TransformComponent* transform,
         RigidbodyComponent* rb,
         const Vector3& normal,
         float depth);
 
+    void resolveCollision(
+        TransformComponent* trans1, RigidbodyComponent* rb1,
+        TransformComponent* trans2, RigidbodyComponent* rb2,
+        const Vector3& normal, float depth);
+
 public:
     PhysicsSystem(World& w) : world(w) {}
 
-    // Main update method
     void update(float deltaTime);
-
-    // Force application methods
     void applyForce(Entity* entity, const Vector3& force, const Vector3& point);
 
-    // Gravity accessor/mutator
     float getGravity() const { return gravity; }
     void setGravity(float g) { gravity = g; }
 };

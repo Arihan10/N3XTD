@@ -14,6 +14,7 @@
 #include "World.h"
 #include "MeshLoader.h"
 #include "PhysicsSystem.h"
+#include "KeyTracker.h"
 
 #include <stdio.h>
 #include <fcntl.h>
@@ -67,9 +68,8 @@ double deltaY = 0.0;
 float lastMouseX = 0;
 float lastMouseY = 0;
 
-// Directional keys and mouse control
-bool dirs[10] = { false };
-bool movingCamera = false;
+// Single press keys
+KeyTracker keyTracker; 
 
 // World instance
 World world;
@@ -83,6 +83,9 @@ std::shared_ptr<Entity> fireAxe;
 std::shared_ptr<Entity> ak; 
 std::shared_ptr<Entity> ball; 
 std::shared_ptr<Entity> ground; 
+std::shared_ptr<Entity> ground2; 
+std::shared_ptr<Entity> ground3; 
+std::shared_ptr<Entity> box1; 
 
 void loadMesh(std::shared_ptr<Entity> entity, const std::string& filename) {
     MeshComponent mesh;
@@ -90,10 +93,38 @@ void loadMesh(std::shared_ptr<Entity> entity, const std::string& filename) {
 
     auto transform = entity->getComponent<TransformComponent>();
     if (transform) {
-        mesh.updateTransform(transform->position, transform->scale);
+        mesh.updateTransform(transform->position, transform->rotation, transform->scale); 
     }
 
     entity->addComponent(mesh);
+}
+
+void createStaticObject(std::shared_ptr<Entity> entity, const std::string& meshFile, const std::string& name, const Vector3& position, const Vector3& rotation, const Vector3& scale, const Vector3& color) {
+    entity = world.createEntity(); 
+    
+    // Add basic components
+    entity->addComponent(TransformComponent(position, rotation, scale));
+    entity->addComponent(NameComponent(name));
+    entity->addComponent(ColorComponent(color.x, color.y, color.z));
+
+    // Load the mesh
+    loadMesh(entity, meshFile);
+}
+
+void createPhysicsObject(std::shared_ptr<Entity> entity, const std::string& meshFile, const std::string& name, const Vector3& position, const Vector3& rotation, const Vector3& scale, const Vector3& color, float mass, float restitution, float friction, float angularDamping, bool isStatic) {
+    entity = world.createEntity(); 
+    
+    // Add basic components (same as static object)
+    entity->addComponent(TransformComponent(position, rotation, scale));
+    entity->addComponent(NameComponent(name));
+    entity->addComponent(ColorComponent(color.x, color.y, color.z));
+
+    // Add physics components
+    entity->addComponent(RigidbodyComponent(mass, restitution, friction, angularDamping, isStatic));
+    entity->addComponent(ColliderComponent(ColliderComponent::BOX, scale)); 
+
+    // Load the mesh
+    loadMesh(entity, meshFile);
 }
 
 void Init() {
@@ -102,71 +133,76 @@ void Init() {
 
     // Create Suzanne
     suzanne = world.createEntity();
-    suzanne->addComponent(TransformComponent(Vector3(0, 0, 10), Vector3(3, 3, 3)));
+    suzanne->addComponent(TransformComponent(Vector3(0, 0, 10), Vector3(0, 0, 0), Vector3(3, 3, 3))); 
     suzanne->addComponent(NameComponent("Suzanne"));
     suzanne->addComponent(ColorComponent(1.0f, 1.0f, 0.0f));
     loadMesh(suzanne, "Suzanne.obj");
 
     // Create Fire Axe
     fireAxe = world.createEntity();
-    fireAxe->addComponent(TransformComponent(Vector3(7, 0, -9), Vector3(1, 1, 1)));
+    fireAxe->addComponent(TransformComponent(Vector3(7, 0, -9), Vector3(0, 0, 0), Vector3(1, 1, 1)));
     fireAxe->addComponent(NameComponent("Fire_Axe"));
     fireAxe->addComponent(ColorComponent(1.0, 0.0, 0.0));
     loadMesh(fireAxe, "Fire_Axe_Test_3.obj");
 
     // Create AK
     ak = world.createEntity();
-    ak->addComponent(TransformComponent(Vector3(3, 0, -7), Vector3(3, 3, 3)));
-    ak->addComponent(NameComponent("AK_1"));
-    ak->addComponent(ColorComponent(0.0, 0.0, 1.0));
-    loadMesh(ak, "AK_1.obj");
+    ak->addComponent(TransformComponent(Vector3(3, 0, -7), Vector3(0, 0, 0), Vector3(3, 3, 3))); 
+    ak->addComponent(NameComponent("AK_1")); 
+    ak->addComponent(ColorComponent(0.0, 0.0, 1.0)); 
+    loadMesh(ak, "AK_1.obj"); 
 
     ball = world.createEntity();
-    ball->addComponent(TransformComponent(Vector3(0, 25, 0), Vector3(2, 2, 2))); 
+    ball->addComponent(TransformComponent(Vector3(0, 25, 8), Vector3(0, 0, 0), Vector3(2, 2, 2)));
     ball->addComponent(NameComponent("Ball")); 
     ball->addComponent(ColorComponent(1.0f, 1.0f, 1.0f)); 
-    ball->addComponent(RigidbodyComponent(1.0f, 0.6f, 0.02f, 0.001f)); // Mass 1, high bounce
-    ball->addComponent(ColliderComponent(
-        ColliderComponent::SPHERE,
-        Vector3(2, 2, 2)  // Radius of 1
-    ));
+    ball->addComponent(RigidbodyComponent(1.0f, 0.6f, 0.002f, 0.00001f)); // Mass 1, high bounce
+    ball->addComponent(ColliderComponent(ColliderComponent::SPHERE, Vector3(2, 2, 2))); 
     loadMesh(ball, "Sphere_Ico.obj");
 
     // Create ground
     ground = world.createEntity();
-    ground->addComponent(TransformComponent(Vector3(0, -25, 0), Vector3(15, 0.1, 15))); 
+    ground->addComponent(TransformComponent(Vector3(0, -25, 0), Vector3(40, 0, 0), Vector3(15, 0.1, 15)));
     ground->addComponent(NameComponent("Ground")); 
     ground->addComponent(ColorComponent(0.0f, 1.0f, 0.0f)); 
     ground->addComponent(RigidbodyComponent(1.0f, 0.5f, 0.02f, 0.001f, true)); // Static object
-    ground->addComponent(ColliderComponent(
-        ColliderComponent::BOX,
-        Vector3(15, 0.1, 15)  // Thin box
-    ));
+    ground->addComponent(ColliderComponent(ColliderComponent::BOX, Vector3(15, 0.1, 15))); 
     loadMesh(ground, "Cube.obj"); 
+
+    // Create ground
+    ground2 = world.createEntity();
+    ground2->addComponent(TransformComponent(Vector3(0, -30, 25), Vector3(-70, 0, 0), Vector3(15, 0.1, 15)));
+    ground2->addComponent(NameComponent("Ground"));
+    ground2->addComponent(ColorComponent(0.0f, 1.0f, 0.0f));
+    ground2->addComponent(RigidbodyComponent(1.0f, 0.5f, 0.002f, 0.001f, true)); // Static object
+    ground2->addComponent(ColliderComponent(ColliderComponent::BOX, Vector3(15, 0.1, 15))); 
+    loadMesh(ground2, "Cube.obj");
+
+    // Create ground
+    ground3 = world.createEntity();
+    ground3->addComponent(TransformComponent(Vector3(0, -50, 0), Vector3(0, 0, 0), Vector3(75, 0.1, 75)));
+    ground3->addComponent(NameComponent("Ground"));
+    ground3->addComponent(ColorComponent(0.3f, 0.5f, 1.0f));
+    ground3->addComponent(RigidbodyComponent(1.0f, 0.5f, 0.002f, 0.001f, true)); // Static object
+    ground3->addComponent(ColliderComponent(
+        ColliderComponent::BOX,
+        Vector3(75, 0.1, 75)  // Thin box
+    ));
+    loadMesh(ground3, "Cube_Top_Sub.obj");
+
+    createPhysicsObject(box1, "Cube.obj", "Box1", Vector3(0, -45, 60), Vector3(0, 20, 0), Vector3(5, 5, 5), Vector3(0.5, 0.5, 0.5), 1, 0.5f, 0, 0, true); 
 }
 
 void Update(const float deltaTime) {
     float _deltaTime = deltaTime / 1000.0; 
 
-    // Input handling
-    dirs[2] = App::IsKeyPressed('W');
-    dirs[3] = App::IsKeyPressed('S');
-    dirs[4] = App::IsKeyPressed('A');
-    dirs[5] = App::IsKeyPressed('D');
-    dirs[0] = App::IsKeyPressed('E'); // up
-    dirs[1] = App::IsKeyPressed('Q'); // down
-
-    bool currentMovingCamera = App::IsKeyPressed(VK_SHIFT);
-    if (currentMovingCamera && !movingCamera) {
-        movingCamera = true;
-    }
-    movingCamera = currentMovingCamera;
+    bool movingCamera = App::IsKeyPressed(VK_SHIFT); 
 
     if (App::IsKeyPressed(VK_ESCAPE)) {
         glutLeaveMainLoop();
     }
 
-    // Mouse handling
+    // Input handling
     if (movingCamera) {
         float mouseX, mouseY;
         App::GetMousePos(mouseX, mouseY);
@@ -180,21 +216,21 @@ void Update(const float deltaTime) {
         angleY -= deltaX * _deltaTime * mouseSensitivityX;
         angleX += deltaY * _deltaTime * mouseSensitivityY;
 
-        if (dirs[0]) camPos.y += moveSpeed * _deltaTime;
-        if (dirs[1]) camPos.y -= moveSpeed * _deltaTime;
-        if (dirs[2]) {
+        if (App::IsKeyPressed('E')) camPos.y += moveSpeed * _deltaTime; // up
+        if (App::IsKeyPressed('Q')) camPos.y -= moveSpeed * _deltaTime; // down
+        if (App::IsKeyPressed('W')) {
             camPos.x += sin(-angleY) * moveSpeed * _deltaTime;
             camPos.z += cos(-angleY) * moveSpeed * _deltaTime;
         }
-        if (dirs[3]) {
+        if (App::IsKeyPressed('S')) {
             camPos.x -= sin(-angleY) * moveSpeed * _deltaTime;
             camPos.z -= cos(-angleY) * moveSpeed * _deltaTime;
         }
-        if (dirs[4]) {
+        if (App::IsKeyPressed('A')) {
             camPos.x -= sin(-angleY + 3.14 / 2) * moveSpeed * _deltaTime;
             camPos.z -= cos(-angleY + 3.14 / 2) * moveSpeed * _deltaTime;
         }
-        if (dirs[5]) {
+        if (App::IsKeyPressed('D')) {
             camPos.x += sin(-angleY + 3.14 / 2) * moveSpeed * _deltaTime;
             camPos.z += cos(-angleY + 3.14 / 2) * moveSpeed * _deltaTime;
         }
@@ -212,17 +248,28 @@ void Update(const float deltaTime) {
         auto mesh = entity->getComponent<MeshComponent>();
 
         if (transform && mesh) {
-            mesh->updateTransform(transform->position, transform->scale);
+            mesh->updateTransform(transform->position, transform->rotation, transform->scale); 
         }
     }
 
-    physicsSystem.update(_deltaTime); 
-
-    /*if (App::IsKeyPressed('F')) {
+    if (App::IsKeyPressed('F')) {
         Vector3 hitPoint = ball->getComponent<TransformComponent>()->position + Vector3(0, -0.2, 0); // Slightly below center
-        Vector3 clubForce = Vector3(forwardDir.x * power, upAngle * power, forwardDir.z * power); 
-        physicsSystem.applyForce(ball.get(), clubForce, hitPoint); 
-    }*/
+        // Vector3 clubForce = Vector3(forwardDir.x * power, upAngle * power, forwardDir.z * power); 
+        Vector3 clubForce = Vector3(2, 2, 0);
+        physicsSystem.applyForce(ball.get(), clubForce, hitPoint);
+    } else if (App::IsKeyPressed('T')) {
+        ball->getComponent<TransformComponent>()->position = Vector3(0, 25, 8); 
+        ball->getComponent<RigidbodyComponent>()->velocity = Vector3(0, 0, 0); 
+    }
+
+    float force = 20; 
+    if (keyTracker.IsKeyDown(VK_LEFT)) physicsSystem.applyForce(ball.get(), Vector3(force, 0, 0), ball->getComponent<TransformComponent>()->position); 
+    if (keyTracker.IsKeyDown(VK_RIGHT)) physicsSystem.applyForce(ball.get(), Vector3(-force, 0, 0), ball->getComponent<TransformComponent>()->position); 
+    if (keyTracker.IsKeyDown(VK_UP)) physicsSystem.applyForce(ball.get(), Vector3(0, 0, force), ball->getComponent<TransformComponent>()->position); 
+    if (keyTracker.IsKeyDown(VK_DOWN)) physicsSystem.applyForce(ball.get(), Vector3(0, 0, -force), ball->getComponent<TransformComponent>()->position); 
+
+    physicsSystem.update(_deltaTime); 
+    keyTracker.Update(); 
 }
 
 void Render() {
@@ -297,14 +344,17 @@ void Render() {
             viewNormal = viewNormal.normalize();
 
             // Backface culling
-            if (viewNormal.dot(projectedVerts3D[0]) < 0) continue;
+            Vector3 midPoint = (projectedVerts3D[0] + projectedVerts3D[1] + projectedVerts3D[2]) / 3.0; 
+            Vector3 viewDir = midPoint.normalize(); 
+            if (viewNormal.dot(viewDir) < 0) continue; 
+            // if (viewNormal.dot(projectedVerts3D[0]) < 0) continue; 
 
             // Lighting calculation
-            Vector3 light = lightDir.normalize();
-            double dp = (worldNormal.dot(light) + 1) / 2.0;
+            Vector3 light = lightDir.normalize(); 
+            double dp = (worldNormal.dot(light) + 1) / 2.0; 
 
             // Calculate midpoint for depth sorting
-            Vector3 midPoint = Vector3::getMidpoint(translatedVertices[0], translatedVertices[1], translatedVertices[2]);
+            // Vector3 midPoint = Vector3::getMidpoint(translatedVertices[0], translatedVertices[1], translatedVertices[2]);
             double depth = midPoint.x * midPoint.x + midPoint.y * midPoint.y + midPoint.z * midPoint.z;
 
             // Clip against near plane
