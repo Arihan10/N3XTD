@@ -8,9 +8,12 @@
 
 class Entity {
 private:
-    std::unordered_map<std::type_index, std::shared_ptr<void>> components;
+    std::unordered_map<std::type_index, std::shared_ptr<void>> components; 
 
 public:
+    bool isEnabled = true; 
+    void setEnabled(bool enabled) { isEnabled = enabled; }
+
     template<typename T>
     void addComponent(const T& component) {
         components[std::type_index(typeid(T))] = std::make_shared<T>(component);

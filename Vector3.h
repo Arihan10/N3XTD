@@ -29,7 +29,8 @@ public:
 
     Vector3 multiplyMatrix(const double matrix[4][4]) const;
 
-    static Vector3 getMidpoint(const Vector3& one, const Vector3& two, const Vector3& three);
+    static Vector3 getMidpoint(const Vector3& one, const Vector3& two, const Vector3& three); 
+    static double getTriangleDepth(const Vector3& v1, const Vector3& v2, const Vector3& v3); 
     static Vector3 intersectPlane(const Vector3& plane_p, const Vector3& plane_n, const Vector3& lineStart, const Vector3& lineEnd);
     static double signedDistance(const Vector3& p, const Vector3& plane_n, const Vector3& plane_p);
     static int clipTriangleAgainstPlane(const Vector3& plane_p, const Vector3& plane_n, Vector3 triIn[3], Vector3 clipped[2][3]);

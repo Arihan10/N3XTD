@@ -73,6 +73,13 @@ Vector3 Vector3::getMidpoint(const Vector3& one, const Vector3& two, const Vecto
         1.0);
 }
 
+double Vector3::getTriangleDepth(const Vector3& v1, const Vector3& v2, const Vector3& v3) {
+    double d1 = v1.x * v1.x + v1.y * v1.y + v1.z * v1.z;
+    double d2 = v2.x * v2.x + v2.y * v2.y + v2.z * v2.z;
+    double d3 = v3.x * v3.x + v3.y * v3.y + v3.z * v3.z;
+    return (d1 < d2 ? (d1 < d3 ? d1 : d3) : (d2 < d3 ? d2 : d3)); // Use closest point instead of midpoint
+}
+
 Vector3 Vector3::intersectPlane(const Vector3& plane_p, const Vector3& plane_n, const Vector3& lineStart, const Vector3& lineEnd) {
     double plane_d = -plane_n.dot(plane_p);
     double ad = lineStart.dot(plane_n);

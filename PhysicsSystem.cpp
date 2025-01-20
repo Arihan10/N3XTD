@@ -3,6 +3,7 @@
 #include "PhysicsSystem.h"
 #include <algorithm>
 #include <cmath>
+#include <iostream>
 
 OrientedBox::OrientedBox(const Vector3& pos, const Vector3& size, const Vector3& rotation) {
     center = pos;
@@ -62,12 +63,10 @@ Vector3 OrientedBox::getVertex(int i) const {
 }
 
 void OrientedBox::getMinMaxOnAxis(const Vector3& axis, float& min, float& max) const {
-    // First vertex as initial values
     Vector3 vertex = getVertex(0);
     float dot = vertex.dot(axis);
     min = max = dot;
 
-    // Check remaining vertices
     for (int i = 1; i < 8; i++) {
         vertex = getVertex(i);
         dot = vertex.dot(axis);
@@ -84,26 +83,21 @@ bool PhysicsSystem::checkSphereOBBCollision(
     Vector3& normal,
     float& depth) {
 
-    // Get vector from box center to sphere center
     Vector3 localPos = spherePos - box.center;
 
-    // Find closest point on box
     float dotX = localPos.dot(box.axisX);
     float dotY = localPos.dot(box.axisY);
     float dotZ = localPos.dot(box.axisZ);
 
-    // Clamp to box bounds
-    float clampedX = std::max((float)-box.halfExtents.x, std::min(dotX, (float)box.halfExtents.x));
-    float clampedY = std::max((float)-box.halfExtents.y, std::min(dotY, (float)box.halfExtents.y));
-    float clampedZ = std::max((float)-box.halfExtents.z, std::min(dotZ, (float)box.halfExtents.z));
+    float clampedX = std::max((float)-box.halfExtents.x, std::min(dotX, (float)box.halfExtents.x)); 
+    float clampedY = std::max((float)-box.halfExtents.y, std::min(dotY, (float)box.halfExtents.y)); 
+    float clampedZ = std::max((float)-box.halfExtents.z, std::min(dotZ, (float)box.halfExtents.z)); 
 
-    // Construct closest point using clamped distances along each axis
     Vector3 closest = box.center;
     closest = closest + box.axisX * clampedX;
     closest = closest + box.axisY * clampedY;
     closest = closest + box.axisZ * clampedZ;
 
-    // Check if sphere intersects with closest point
     Vector3 delta = spherePos - closest;
     float distanceSquared = delta.dot(delta);
 
@@ -114,11 +108,11 @@ bool PhysicsSystem::checkSphereOBBCollision(
     float distance = sqrt(distanceSquared);
 
     if (distance < 0.0001f) {
-        normal = box.axisY; // Default to up if sphere is exactly on surface
+        normal = box.axisY;
         depth = radius;
     }
     else {
-        normal = delta / distance;
+        normal = delta * (1.0f / distance);
         depth = radius - distance;
     }
 
@@ -201,7 +195,7 @@ bool PhysicsSystem::checkOBBOBBCollision(
             Vector3 axis = box1Axes[i].cross(box2Axes[j]);
             float length = axis.length();
             if (length > 0.001f) {
-                axis = axis * (1.0f / length);  // Normalize
+                axis = axis * (1.0f / length);
                 float axisDepth;
                 bool flip;
                 if (!testAxis(axis, box1, box2, axisDepth, flip)) {
@@ -222,8 +216,8 @@ bool PhysicsSystem::checkOBBOBBCollision(
 }
 
 void PhysicsSystem::resolveCollision(
-    TransformComponent* trans1, RigidbodyComponent* rb1,
-    TransformComponent* trans2, RigidbodyComponent* rb2,
+    TransformComponent* trans1, RigidbodyComponent* rb1, ColliderComponent* col1,
+    TransformComponent* trans2, RigidbodyComponent* rb2, ColliderComponent* col2,
     const Vector3& normal, float depth) {
 
     if (!rb1->isStatic && !rb2->isStatic) {
@@ -231,19 +225,15 @@ void PhysicsSystem::resolveCollision(
         float ratio1 = rb1->mass / totalMass;
         float ratio2 = rb2->mass / totalMass;
 
-        // Move objects out of collision
         trans1->position = trans1->position + normal * depth * ratio2;
         trans2->position = trans2->position - normal * depth * ratio1;
 
-        // Calculate relative velocity
         Vector3 relativeVel = rb1->velocity - rb2->velocity;
         float velAlongNormal = relativeVel.dot(normal);
 
-        // Only resolve if objects are moving towards each other
         if (velAlongNormal < 0) {
             float restitution = std::min(rb1->restitution, rb2->restitution);
 
-            // Reduce restitution at low speeds
             float speedThreshold = 2.0f;
             if (std::abs(velAlongNormal) < speedThreshold) {
                 restitution *= std::abs(velAlongNormal) / speedThreshold;
@@ -256,7 +246,6 @@ void PhysicsSystem::resolveCollision(
             rb1->velocity = rb1->velocity + impulseVec / rb1->mass;
             rb2->velocity = rb2->velocity - impulseVec / rb2->mass;
 
-            // Calculate and apply friction
             Vector3 tangent = relativeVel - normal * velAlongNormal;
             float tangentLength = tangent.length();
 
@@ -276,42 +265,36 @@ void PhysicsSystem::resolveCollision(
         }
     }
     else if (!rb1->isStatic) {
-        handleStaticCollision(trans1, rb1, normal, depth);
+        handleStaticCollision(trans1, rb1, col1, normal, depth);
     }
     else if (!rb2->isStatic) {
-        handleStaticCollision(trans2, rb2, normal * -1.0f, depth);
+        handleStaticCollision(trans2, rb2, col2, normal * -1.0f, depth);
     }
 }
 
 void PhysicsSystem::handleStaticCollision(
     TransformComponent* transform,
     RigidbodyComponent* rb,
+    ColliderComponent* collider,
     const Vector3& normal,
     float depth) {
 
-    // Move object out of collision
     transform->position = transform->position + normal * depth;
 
-    // Calculate velocity reflection
     float velDotNormal = rb->velocity.dot(normal);
 
-    // Only reflect if moving towards surface
     if (velDotNormal < 0) {
-        // Reduce restitution at low speeds to encourage rolling
         float speedThreshold = 2.0f;
         float restitution = rb->restitution;
         if (std::abs(velDotNormal) < speedThreshold) {
             restitution *= std::abs(velDotNormal) / speedThreshold;
         }
 
-        // Calculate reflection vector
         Vector3 normalVel = normal * velDotNormal;
         Vector3 tangentVel = rb->velocity - normalVel;
 
-        // Apply restitution to normal component
         Vector3 newVel = tangentVel - normalVel * restitution;
 
-        // Apply friction to tangential component
         float tangentSpeed = tangentVel.length();
         if (tangentSpeed > 0.0001f) {
             float frictionDecel = rb->friction * std::abs(gravity);
@@ -324,10 +307,20 @@ void PhysicsSystem::handleStaticCollision(
 
         rb->velocity = newVel;
 
-        // Update angular velocity for rolling on surface
+        // Update angular velocity for rolling on surface, using proper radius
         if (tangentSpeed > 0.0001f) {
             Vector3 rotationAxis = normal.cross(tangentVel).normalize();
-            float rotationSpeed = tangentSpeed / (2.0f * 3.14159f);  // Approximate radius as 1
+            float radius;
+
+            if (collider->type == ColliderComponent::SPHERE) {
+                radius = collider->size.x; // Sphere radius
+            }
+            else {
+                // For box, use the average of the horizontal dimensions as an approximation
+                radius = (collider->size.x + collider->size.z) * 0.5f;
+            }
+
+            float rotationSpeed = tangentSpeed / radius;
             rb->angularVelocity = rotationAxis * rotationSpeed;
         }
     }
@@ -336,8 +329,9 @@ void PhysicsSystem::handleStaticCollision(
 void PhysicsSystem::applyForce(Entity* entity, const Vector3& force, const Vector3& point) {
     auto rb = entity->getComponent<RigidbodyComponent>();
     auto transform = entity->getComponent<TransformComponent>();
+    auto collider = entity->getComponent<ColliderComponent>();
 
-    if (!rb || !transform || rb->isStatic) return;
+    if (!rb || !transform || !collider || rb->isStatic) return;
 
     // Apply linear force
     Vector3 acceleration = force * (1.0f / rb->mass);
@@ -346,14 +340,24 @@ void PhysicsSystem::applyForce(Entity* entity, const Vector3& force, const Vecto
     // Calculate and apply torque
     Vector3 torque = (point - transform->position).cross(force);
 
-    // Convert torque to angular acceleration (simplified - assuming uniform mass distribution)
-    float momentOfInertia = rb->mass * 0.4f; // Simplified moment of inertia for a sphere
-    Vector3 angularAccel = torque * (1.0f / momentOfInertia);
+    // Calculate moment of inertia based on collider type
+    float momentOfInertia;
+    if (collider->type == ColliderComponent::SPHERE) {
+        float radius = collider->size.x;
+        momentOfInertia = 0.4f * rb->mass * radius * radius; // For solid sphere
+    }
+    else {
+        // For box, use average dimension for approximation
+        float avgSize = (collider->size.x + collider->size.y + collider->size.z) / 3.0f;
+        momentOfInertia = 0.4f * rb->mass * avgSize * avgSize; // Simplified box moment
+    }
 
+    Vector3 angularAccel = torque * (1.0f / momentOfInertia);
     rb->angularVelocity = rb->angularVelocity + angularAccel;
 }
 
 void PhysicsSystem::update(float deltaTime) {
+    const float RAD_TO_DEG = 180.0f / 3.14159265359f;
     auto entities = world.getEntities();
 
     // Update velocities and positions
@@ -361,7 +365,9 @@ void PhysicsSystem::update(float deltaTime) {
         auto rb = entity->getComponent<RigidbodyComponent>();
         auto transform = entity->getComponent<TransformComponent>();
 
-        if (!rb || !transform || rb->isStatic) continue;
+        if (!rb || !transform || rb->isStatic || !entity->isEnabled) continue; 
+
+        // std::cout << entity->getComponent<NameComponent>()->name << " " << entity->isEnabled << std::endl; 
 
         // Apply gravity
         rb->acceleration.y = gravity;
@@ -373,8 +379,8 @@ void PhysicsSystem::update(float deltaTime) {
         // Update angular velocity (reduced by air resistance)
         rb->angularVelocity = rb->angularVelocity * (1.0f - rb->airResistance * deltaTime);
 
-        // Update rotation based on angular velocity
-        transform->rotation = transform->rotation + rb->angularVelocity * deltaTime;
+        // Update rotation based on angular velocity (convert to degrees)
+        transform->rotation = transform->rotation + rb->angularVelocity * RAD_TO_DEG * deltaTime;
 
         // Update linear velocity and position
         rb->velocity = rb->velocity + rb->acceleration * deltaTime;
@@ -386,6 +392,8 @@ void PhysicsSystem::update(float deltaTime) {
         for (size_t j = i + 1; j < entities.size(); j++) {
             auto entity1 = entities[i];
             auto entity2 = entities[j];
+
+            if (!entity1->isEnabled || !entity2->isEnabled) continue; 
 
             auto rb1 = entity1->getComponent<RigidbodyComponent>();
             auto rb2 = entity2->getComponent<RigidbodyComponent>();
@@ -400,33 +408,35 @@ void PhysicsSystem::update(float deltaTime) {
             float depth;
             bool collision = false;
 
-            // Create oriented boxes if needed
-            OrientedBox box1(trans1->position + col1->offset, col1->size, trans1->rotation);
-            OrientedBox box2(trans2->position + col2->offset, col2->size, trans2->rotation);
-
             if (col1->type == ColliderComponent::SPHERE && col2->type == ColliderComponent::SPHERE) {
                 collision = checkSphereSphereCollision(
                     trans1->position + col1->offset, col1->size.x,
                     trans2->position + col2->offset, col2->size.x,
                     normal, depth);
             }
-            else if (col1->type == ColliderComponent::SPHERE && col2->type == ColliderComponent::BOX) {
-                collision = checkSphereOBBCollision(
-                    trans1->position + col1->offset, col1->size.x,
-                    box2, normal, depth);
-            }
-            else if (col1->type == ColliderComponent::BOX && col2->type == ColliderComponent::SPHERE) {
-                collision = checkSphereOBBCollision(
-                    trans2->position + col2->offset, col2->size.x,
-                    box1, normal, depth);
-                normal = normal * -1.0f;
-            }
-            else if (col1->type == ColliderComponent::BOX && col2->type == ColliderComponent::BOX) {
-                collision = checkOBBOBBCollision(box1, box2, normal, depth);
+            else {
+                // Create oriented boxes if needed for box collisions
+                OrientedBox box1(trans1->position + col1->offset, col1->size, trans1->rotation);
+                OrientedBox box2(trans2->position + col2->offset, col2->size, trans2->rotation);
+
+                if (col1->type == ColliderComponent::SPHERE && col2->type == ColliderComponent::BOX) {
+                    collision = checkSphereOBBCollision(
+                        trans1->position + col1->offset, col1->size.x,
+                        box2, normal, depth);
+                }
+                else if (col1->type == ColliderComponent::BOX && col2->type == ColliderComponent::SPHERE) {
+                    collision = checkSphereOBBCollision(
+                        trans2->position + col2->offset, col2->size.x,
+                        box1, normal, depth);
+                    normal = normal * -1.0f;
+                }
+                else if (col1->type == ColliderComponent::BOX && col2->type == ColliderComponent::BOX) {
+                    collision = checkOBBOBBCollision(box1, box2, normal, depth);
+                }
             }
 
             if (collision) {
-                resolveCollision(trans1, rb1, trans2, rb2, normal, depth);
+                resolveCollision(trans1, rb1, col1, trans2, rb2, col2, normal, depth);
             }
         }
     }
@@ -446,4 +456,16 @@ bool PhysicsSystem::checkSphereSphereCollision(
     normal = delta * (1.0f / distance); // Normalize
     depth = minDistance - distance;
     return true;
+}
+
+void PhysicsSystem::resetPhysicsState(Entity* entity) {
+    auto rb = entity->getComponent<RigidbodyComponent>();
+    // auto transform = entity->getComponent<TransformComponent>(); 
+
+    if (!rb) return; 
+
+    // Reset velocities and acceleration
+    rb->velocity = Vector3(0, 0, 0);
+    rb->angularVelocity = Vector3(0, 0, 0);
+    rb->acceleration = Vector3(0, 0, 0); 
 }

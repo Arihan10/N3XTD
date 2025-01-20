@@ -56,13 +56,14 @@ private:
     void handleStaticCollision(
         TransformComponent* transform,
         RigidbodyComponent* rb,
+        ColliderComponent* collider,
         const Vector3& normal,
         float depth);
 
     void resolveCollision(
-        TransformComponent* trans1, RigidbodyComponent* rb1,
-        TransformComponent* trans2, RigidbodyComponent* rb2,
-        const Vector3& normal, float depth);
+        TransformComponent* trans1, RigidbodyComponent* rb1, ColliderComponent* col1,
+        TransformComponent* trans2, RigidbodyComponent* rb2, ColliderComponent* col2,
+        const Vector3& normal, float depth); 
 
 public:
     PhysicsSystem(World& w) : world(w) {}
@@ -72,6 +73,8 @@ public:
 
     float getGravity() const { return gravity; }
     void setGravity(float g) { gravity = g; }
+
+    void resetPhysicsState(Entity* entity); 
 };
 
 #endif // PHYSICS_SYSTEM_H

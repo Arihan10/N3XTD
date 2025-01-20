@@ -31,6 +31,8 @@
     <ClCompile Include="MeshLoader.cpp" />
     <ClCompile Include="PhysicsSystem.cpp" />
     <ClCompile Include="KeyTracker.cpp" />
+    <ClCompile Include="Scene.cpp" />
+    <ClCompile Include="SceneManager.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h" />
@@ -71,6 +73,8 @@
     <ClInclude Include="MeshLoader.h" />
     <ClInclude Include="PhysicsSystem.h" />
     <ClInclude Include="KeyTracker.h" />
+    <ClInclude Include="Scene.h" />
+    <ClInclude Include="SceneManager.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="API">

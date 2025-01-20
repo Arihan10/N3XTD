@@ -194,6 +194,8 @@
     <ClInclude Include="MeshLoader.h" />
     <ClInclude Include="miniaudio\miniaudio.h" />
     <ClInclude Include="PhysicsSystem.h" />
+    <ClInclude Include="Scene.h" />
+    <ClInclude Include="SceneManager.h" />
     <ClInclude Include="Shape3D.h" />
     <ClInclude Include="stb_image\stb_image.h" />
     <ClInclude Include="stdafx.h" />
@@ -214,6 +216,8 @@
     <ClCompile Include="MeshLoader.cpp" />
     <ClCompile Include="miniaudio\miniaudio.cpp" />
     <ClCompile Include="PhysicsSystem.cpp" />
+    <ClCompile Include="Scene.cpp" />
+    <ClCompile Include="SceneManager.cpp" />
     <ClCompile Include="Shape3D.cpp" />
     <ClCompile Include="stb_image\stb_image.cpp" />
     <ClCompile Include="stdafx.cpp">

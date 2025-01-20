@@ -36,6 +36,9 @@ struct MeshComponent {
     std::vector<int> triangles;
     std::vector<Vector3> normals;
     std::vector<Vector3> originalVertices;
+    int zIndex = 0; 
+
+    MeshComponent(int zIdx = 0) : zIndex(zIdx) {}  // Constructor with default z-index
 
     void calculateNormals() {
         normals.clear();
