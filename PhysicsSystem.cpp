@@ -280,7 +280,6 @@ void PhysicsSystem::handleStaticCollision(
     float depth) {
 
     transform->position = transform->position + normal * depth;
-
     float velDotNormal = rb->velocity.dot(normal);
 
     if (velDotNormal < 0) {
@@ -292,37 +291,51 @@ void PhysicsSystem::handleStaticCollision(
 
         Vector3 normalVel = normal * velDotNormal;
         Vector3 tangentVel = rb->velocity - normalVel;
-
         Vector3 newVel = tangentVel - normalVel * restitution;
 
         float tangentSpeed = tangentVel.length();
         if (tangentSpeed > 0.0001f) {
-            float frictionDecel = rb->friction * std::abs(gravity);
+            // Apply rolling resistance instead of sliding friction when appropriate
+            float rollingResistanceCoef = 0.01f;  // Adjust this value as needed
+            float slidingFrictionCoef = rb->friction;
+
+            // Determine if the object is rolling or sliding
+            float radius = (collider->type == ColliderComponent::SPHERE) ? collider->size.x :
+                (collider->size.x + collider->size.z) * 0.5f;
+
+            Vector3 expectedRollingVelocity = rb->angularVelocity.cross(normal) * radius;
+            float velocityDiff = (tangentVel - expectedRollingVelocity).length();
+
+            // If velocity matches rolling velocity (within tolerance), use rolling resistance
+            // Otherwise, use sliding friction
+            float effectiveFriction = (velocityDiff < 0.1f) ? rollingResistanceCoef : slidingFrictionCoef;
+
+            // Apply friction deceleration
+            float frictionDecel = effectiveFriction * std::abs(gravity);
             float newSpeed = std::max(0.0f, tangentSpeed - frictionDecel);
 
             if (tangentSpeed > 0) {
                 newVel = newVel * (newSpeed / tangentSpeed);
             }
+
+            // Calculate rolling for spheres
+            if (collider->type == ColliderComponent::SPHERE && newSpeed > 0.0001f) {
+                float radius = collider->size.x;
+
+                // Get the horizontal direction of motion
+                Vector3 horizontalVel = newVel;
+                horizontalVel.y = 0;  // Zero out vertical component
+                horizontalVel = horizontalVel.normalize();
+
+                // Rotation axis should be perpendicular to motion in the horizontal plane
+                Vector3 rotationAxis(-horizontalVel.z, 0, horizontalVel.x);
+
+                float rotationSpeed = newSpeed / radius;
+                rb->angularVelocity = rotationAxis * rotationSpeed;
+            }
         }
 
         rb->velocity = newVel;
-
-        // Update angular velocity for rolling on surface, using proper radius
-        if (tangentSpeed > 0.0001f) {
-            Vector3 rotationAxis = normal.cross(tangentVel).normalize();
-            float radius;
-
-            if (collider->type == ColliderComponent::SPHERE) {
-                radius = collider->size.x; // Sphere radius
-            }
-            else {
-                // For box, use the average of the horizontal dimensions as an approximation
-                radius = (collider->size.x + collider->size.z) * 0.5f;
-            }
-
-            float rotationSpeed = tangentSpeed / radius;
-            rb->angularVelocity = rotationAxis * rotationSpeed;
-        }
     }
 }
 
@@ -360,14 +373,11 @@ void PhysicsSystem::update(float deltaTime) {
     const float RAD_TO_DEG = 180.0f / 3.14159265359f;
     auto entities = world.getEntities();
 
-    // Update velocities and positions
     for (auto& entity : entities) {
         auto rb = entity->getComponent<RigidbodyComponent>();
         auto transform = entity->getComponent<TransformComponent>();
 
-        if (!rb || !transform || rb->isStatic || !entity->isEnabled) continue; 
-
-        // std::cout << entity->getComponent<NameComponent>()->name << " " << entity->isEnabled << std::endl; 
+        if (!rb || !transform || rb->isStatic || !entity->isEnabled) continue;
 
         // Apply gravity
         rb->acceleration.y = gravity;
@@ -376,10 +386,18 @@ void PhysicsSystem::update(float deltaTime) {
         Vector3 airResistance = rb->velocity * -rb->airResistance * rb->velocity.length();
         rb->acceleration = rb->acceleration + airResistance;
 
-        // Update angular velocity (reduced by air resistance)
-        rb->angularVelocity = rb->angularVelocity * (1.0f - rb->airResistance * deltaTime);
+        // Add angular damping
+        const float angularDamping = 0.98f;
+        rb->angularVelocity = rb->angularVelocity * angularDamping;
 
-        // Update rotation based on angular velocity (convert to degrees)
+        // Enforce maximum angular velocity
+        const float MAX_ANGULAR_SPEED = 20.0f;
+        float angularSpeed = rb->angularVelocity.length();
+        if (angularSpeed > MAX_ANGULAR_SPEED) {
+            rb->angularVelocity = rb->angularVelocity * (MAX_ANGULAR_SPEED / angularSpeed);
+        }
+
+        // Update rotation based on angular velocity
         transform->rotation = transform->rotation + rb->angularVelocity * RAD_TO_DEG * deltaTime;
 
         // Update linear velocity and position
