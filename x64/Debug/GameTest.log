@@ -1,72 +1,69 @@
-﻿  PhysicsSystem.cpp
-C:\Users\Ariha\Downloads\Ubisoft-Toronto-NEXT-2024-2025-Programming-API\API\GameTest\PhysicsSystem.cpp(67,15): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-  (compiling source file '/PhysicsSystem.cpp')
+﻿  GameTest.cpp
+C:\Users\Ariha\Downloads\Ubisoft-Toronto-NEXT-2024-2025-Programming-API\API\GameTest\GameTest.cpp(114,64): warning C4244: 'argument': conversion from 'const double' to 'float', possible loss of data
+  (compiling source file '/GameTest.cpp')
   
-C:\Users\Ariha\Downloads\Ubisoft-Toronto-NEXT-2024-2025-Programming-API\API\GameTest\PhysicsSystem.cpp(72,25): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-  (compiling source file '/PhysicsSystem.cpp')
+C:\Users\Ariha\Downloads\Ubisoft-Toronto-NEXT-2024-2025-Programming-API\API\GameTest\GameTest.cpp(114,55): warning C4244: 'argument': conversion from 'const double' to 'float', possible loss of data
+  (compiling source file '/GameTest.cpp')
   
-C:\Users\Ariha\Downloads\Ubisoft-Toronto-NEXT-2024-2025-Programming-API\API\GameTest\PhysicsSystem.cpp(88,16): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-  (compiling source file '/PhysicsSystem.cpp')
+C:\Users\Ariha\Downloads\Ubisoft-Toronto-NEXT-2024-2025-Programming-API\API\GameTest\GameTest.cpp(114,46): warning C4244: 'argument': conversion from 'const double' to 'float', possible loss of data
+  (compiling source file '/GameTest.cpp')
   
-C:\Users\Ariha\Downloads\Ubisoft-Toronto-NEXT-2024-2025-Programming-API\API\GameTest\PhysicsSystem.cpp(89,16): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-  (compiling source file '/PhysicsSystem.cpp')
+C:\Users\Ariha\Downloads\Ubisoft-Toronto-NEXT-2024-2025-Programming-API\API\GameTest\GameTest.cpp(128,64): warning C4244: 'argument': conversion from 'const double' to 'float', possible loss of data
+  (compiling source file '/GameTest.cpp')
   
-C:\Users\Ariha\Downloads\Ubisoft-Toronto-NEXT-2024-2025-Programming-API\API\GameTest\PhysicsSystem.cpp(90,16): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-  (compiling source file '/PhysicsSystem.cpp')
+C:\Users\Ariha\Downloads\Ubisoft-Toronto-NEXT-2024-2025-Programming-API\API\GameTest\GameTest.cpp(128,55): warning C4244: 'argument': conversion from 'const double' to 'float', possible loss of data
+  (compiling source file '/GameTest.cpp')
   
-C:\Users\Ariha\Downloads\Ubisoft-Toronto-NEXT-2024-2025-Programming-API\API\GameTest\PhysicsSystem.cpp(102,27): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-  (compiling source file '/PhysicsSystem.cpp')
+C:\Users\Ariha\Downloads\Ubisoft-Toronto-NEXT-2024-2025-Programming-API\API\GameTest\GameTest.cpp(128,46): warning C4244: 'argument': conversion from 'const double' to 'float', possible loss of data
+  (compiling source file '/GameTest.cpp')
   
-C:\Users\Ariha\Downloads\Ubisoft-Toronto-NEXT-2024-2025-Programming-API\API\GameTest\PhysicsSystem.cpp(196,26): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-  (compiling source file '/PhysicsSystem.cpp')
+C:\Users\Ariha\Downloads\Ubisoft-Toronto-NEXT-2024-2025-Programming-API\API\GameTest\GameTest.cpp(269,56): warning C4244: 'argument': conversion from 'int' to 'const float', possible loss of data
+  (compiling source file '/GameTest.cpp')
   
-C:\Users\Ariha\Downloads\Ubisoft-Toronto-NEXT-2024-2025-Programming-API\API\GameTest\PhysicsSystem.cpp(232,30): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-  (compiling source file '/PhysicsSystem.cpp')
+C:\Users\Ariha\Downloads\Ubisoft-Toronto-NEXT-2024-2025-Programming-API\API\GameTest\GameTest.cpp(269,39): warning C4244: 'argument': conversion from 'int' to 'const float', possible loss of data
+  (compiling source file '/GameTest.cpp')
   
-C:\Users\Ariha\Downloads\Ubisoft-Toronto-NEXT-2024-2025-Programming-API\API\GameTest\PhysicsSystem.cpp(250,33): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-  (compiling source file '/PhysicsSystem.cpp')
+C:\Users\Ariha\Downloads\Ubisoft-Toronto-NEXT-2024-2025-Programming-API\API\GameTest\GameTest.cpp(297,22): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+  (compiling source file '/GameTest.cpp')
   
-C:\Users\Ariha\Downloads\Ubisoft-Toronto-NEXT-2024-2025-Programming-API\API\GameTest\PhysicsSystem.cpp(254,39): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-  (compiling source file '/PhysicsSystem.cpp')
+C:\Users\Ariha\Downloads\Ubisoft-Toronto-NEXT-2024-2025-Programming-API\API\GameTest\GameTest.cpp(536,41): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+  (compiling source file '/GameTest.cpp')
   
-C:\Users\Ariha\Downloads\Ubisoft-Toronto-NEXT-2024-2025-Programming-API\API\GameTest\PhysicsSystem.cpp(283,24): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-  (compiling source file '/PhysicsSystem.cpp')
+C:\Users\Ariha\Downloads\Ubisoft-Toronto-NEXT-2024-2025-Programming-API\API\GameTest\GameTest.cpp(537,41): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+  (compiling source file '/GameTest.cpp')
   
-C:\Users\Ariha\Downloads\Ubisoft-Toronto-NEXT-2024-2025-Programming-API\API\GameTest\PhysicsSystem.cpp(296,28): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-  (compiling source file '/PhysicsSystem.cpp')
+C:\Users\Ariha\Downloads\Ubisoft-Toronto-NEXT-2024-2025-Programming-API\API\GameTest\GameTest.cpp(538,41): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+  (compiling source file '/GameTest.cpp')
   
-C:\Users\Ariha\Downloads\Ubisoft-Toronto-NEXT-2024-2025-Programming-API\API\GameTest\PhysicsSystem.cpp(303,26): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-  (compiling source file '/PhysicsSystem.cpp')
+C:\Users\Ariha\Downloads\Ubisoft-Toronto-NEXT-2024-2025-Programming-API\API\GameTest\GameTest.cpp(558,22): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+  (compiling source file '/GameTest.cpp')
   
-C:\Users\Ariha\Downloads\Ubisoft-Toronto-NEXT-2024-2025-Programming-API\API\GameTest\PhysicsSystem.cpp(307,32): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-  (compiling source file '/PhysicsSystem.cpp')
+C:\Users\Ariha\Downloads\Ubisoft-Toronto-NEXT-2024-2025-Programming-API\API\GameTest\GameTest.cpp(560,22): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+  (compiling source file '/GameTest.cpp')
   
-C:\Users\Ariha\Downloads\Ubisoft-Toronto-NEXT-2024-2025-Programming-API\API\GameTest\PhysicsSystem.cpp(323,30): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-  (compiling source file '/PhysicsSystem.cpp')
+C:\Users\Ariha\Downloads\Ubisoft-Toronto-NEXT-2024-2025-Programming-API\API\GameTest\GameTest.cpp(563,18): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+  (compiling source file '/GameTest.cpp')
   
-C:\Users\Ariha\Downloads\Ubisoft-Toronto-NEXT-2024-2025-Programming-API\API\GameTest\PhysicsSystem.cpp(359,22): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-  (compiling source file '/PhysicsSystem.cpp')
+C:\Users\Ariha\Downloads\Ubisoft-Toronto-NEXT-2024-2025-Programming-API\API\GameTest\GameTest.cpp(564,18): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+  (compiling source file '/GameTest.cpp')
   
-C:\Users\Ariha\Downloads\Ubisoft-Toronto-NEXT-2024-2025-Programming-API\API\GameTest\PhysicsSystem.cpp(364,23): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-  (compiling source file '/PhysicsSystem.cpp')
+C:\Users\Ariha\Downloads\Ubisoft-Toronto-NEXT-2024-2025-Programming-API\API\GameTest\GameTest.cpp(571,48): warning C4244: 'argument': conversion from 'int' to 'const float', possible loss of data
+  (compiling source file '/GameTest.cpp')
   
-C:\Users\Ariha\Downloads\Ubisoft-Toronto-NEXT-2024-2025-Programming-API\API\GameTest\PhysicsSystem.cpp(395,28): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-  (compiling source file '/PhysicsSystem.cpp')
+C:\Users\Ariha\Downloads\Ubisoft-Toronto-NEXT-2024-2025-Programming-API\API\GameTest\GameTest.cpp(571,39): warning C4244: 'argument': conversion from 'int' to 'const float', possible loss of data
+  (compiling source file '/GameTest.cpp')
   
-C:\Users\Ariha\Downloads\Ubisoft-Toronto-NEXT-2024-2025-Programming-API\API\GameTest\PhysicsSystem.cpp(432,64): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
-  (compiling source file '/PhysicsSystem.cpp')
+C:\Users\Ariha\Downloads\Ubisoft-Toronto-NEXT-2024-2025-Programming-API\API\GameTest\GameTest.cpp(578,58): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+  (compiling source file '/GameTest.cpp')
   
-C:\Users\Ariha\Downloads\Ubisoft-Toronto-NEXT-2024-2025-Programming-API\API\GameTest\PhysicsSystem.cpp(431,64): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
-  (compiling source file '/PhysicsSystem.cpp')
+C:\Users\Ariha\Downloads\Ubisoft-Toronto-NEXT-2024-2025-Programming-API\API\GameTest\GameTest.cpp(580,29): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+  (compiling source file '/GameTest.cpp')
   
-C:\Users\Ariha\Downloads\Ubisoft-Toronto-NEXT-2024-2025-Programming-API\API\GameTest\PhysicsSystem.cpp(442,68): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
-  (compiling source file '/PhysicsSystem.cpp')
+C:\Users\Ariha\Downloads\Ubisoft-Toronto-NEXT-2024-2025-Programming-API\API\GameTest\GameTest.cpp(587,48): warning C4244: 'argument': conversion from 'int' to 'const float', possible loss of data
+  (compiling source file '/GameTest.cpp')
   
-C:\Users\Ariha\Downloads\Ubisoft-Toronto-NEXT-2024-2025-Programming-API\API\GameTest\PhysicsSystem.cpp(447,68): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
-  (compiling source file '/PhysicsSystem.cpp')
-  
-C:\Users\Ariha\Downloads\Ubisoft-Toronto-NEXT-2024-2025-Programming-API\API\GameTest\PhysicsSystem.cpp(469,20): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-  (compiling source file '/PhysicsSystem.cpp')
+C:\Users\Ariha\Downloads\Ubisoft-Toronto-NEXT-2024-2025-Programming-API\API\GameTest\GameTest.cpp(587,39): warning C4244: 'argument': conversion from 'int' to 'const float', possible loss of data
+  (compiling source file '/GameTest.cpp')
   
   GameTest.vcxproj -> C:\Users\Ariha\Downloads\Ubisoft-Toronto-NEXT-2024-2025-Programming-API\API\x64\Debug\GameTest.exe
   'pwsh.exe' is not recognized as an internal or external command,

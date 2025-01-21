@@ -160,6 +160,7 @@ std::shared_ptr<Entity> box3;
 std::shared_ptr<Entity> guard1; 
 std::shared_ptr<Entity> guard2; 
 std::shared_ptr<Entity> guard3; 
+std::shared_ptr<Entity> guard4; 
 
 void CreateLevel0() {
     // Create Suzanne
@@ -232,6 +233,12 @@ void CreateLevel1() {
         Vector3(0, 0, 40), Vector3(0, 0, 0), Vector3(14, 3, 1),
         Vector3(0.5, 0.5, 0.5),
         1.0f, 0.5f, 0, 0, true, scenes[1]);
+
+    // Front guard
+    createPhysicsObject(guard4, "Cube.obj", "Guard4",
+        Vector3(0, 2, 0), Vector3(0, 0, 0), Vector3(6, 3, 6),
+        Vector3(0.5, 0.5, 0.5),
+        1.0f, 0.5f, 0, 0, true, scenes[1]); 
 }
 
 // Golf specific declarations
@@ -239,7 +246,7 @@ Vector3 ballPositions[2] = { Vector3(0, 25, 8), Vector3(0, 25, -36) };
 
 int currentLevel = 0; 
 
-float swingTime = -1, fullSwingTime = 5.0f, fullSwingForce = 150; 
+float swingTime = -1, fullSwingTime = 5.0f, fullSwingForce = 150, arrowsAngle = 0, arrowsRotationSpeed = 90.0f; 
 
 void LoadScene(int sceneID) {
     size_t length = sizeof(scenes) / sizeof(Scene*);
@@ -355,13 +362,16 @@ void Update(const float deltaTime) {
         LoadScene(currentLevel); 
     }
 
-    float force = 50;
-    if (keyTracker.IsKeyDown(VK_LEFT)) physicsSystem.applyForce(ball.get(), Vector3(-force, 0, 0), ball->getComponent<TransformComponent>()->position); 
+    /*float force = 50;
+    if (keyTracker.IsKeyDown(VK_LEFT)) physicsSystem.applyForce(ball.get(), Vector3(-force, 0, 0), ball->getComponent<TransformComponent>()->position);
     if (keyTracker.IsKeyDown(VK_RIGHT)) physicsSystem.applyForce(ball.get(), Vector3(force, 0, 0), ball->getComponent<TransformComponent>()->position); 
     if (keyTracker.IsKeyDown(VK_UP)) physicsSystem.applyForce(ball.get(), Vector3(0, 0, force), ball->getComponent<TransformComponent>()->position); 
     if (keyTracker.IsKeyDown(VK_DOWN)) physicsSystem.applyForce(ball.get(), Vector3(0, 0, -force), ball->getComponent<TransformComponent>()->position); 
-    /*if (keyTracker.IsKeyDown(VK_SPACE)) physicsSystem.applyForce(ball.get(), Vector3(0, force, 0), ball->getComponent<TransformComponent>()->position);
+    if (keyTracker.IsKeyDown(VK_SPACE)) physicsSystem.applyForce(ball.get(), Vector3(0, force, 0), ball->getComponent<TransformComponent>()->position);
     if (keyTracker.IsKeyDown('C')) LoadScene(currentLevel + 1);*/
+
+    if (App::IsKeyPressed(VK_LEFT)) arrowsAngle -= arrowsRotationSpeed * _deltaTime; 
+    if (App::IsKeyPressed(VK_RIGHT)) arrowsAngle += arrowsRotationSpeed * _deltaTime; 
 
     float swingHandle = (::std::min<float>(swingTime, fullSwingTime)) / fullSwingTime;
 
@@ -370,6 +380,7 @@ void Update(const float deltaTime) {
         ball->getComponent<MeshComponent>()->zIndex = 1; 
         arrows->getComponent<MeshComponent>()->zIndex = 1; 
         arrows->getComponent<TransformComponent>()->position = ball->getComponent<TransformComponent>()->position; 
+        arrows->getComponent<TransformComponent>()->rotation = ball->getComponent<TransformComponent>()->rotation; 
         arrows->getComponent<TransformComponent>()->scale = Vector3(0, 0, 0); 
         arrows->setEnabled(true); 
 
@@ -381,14 +392,16 @@ void Update(const float deltaTime) {
         arrows->setEnabled(false); 
 
         float swingForce = swingHandle * fullSwingForce; 
-        physicsSystem.applyForce(ball.get(), Vector3(0, 0, swingForce), ball->getComponent<TransformComponent>()->position); 
+        // physicsSystem.applyForce(ball.get(), Vector3(0, 0, swingForce), ball->getComponent<TransformComponent>()->position); 
+        physicsSystem.applyForce(ball.get(), arrows->getComponent<TransformComponent>()->getForward() * swingForce, ball->getComponent<TransformComponent>()->position);
 
         swingTime = -1; 
     }
 
     if (swingTime >= 0) {
-        swingTime += fullSwingTime * _deltaTime; 
+        swingTime += _deltaTime; 
 
+        arrows->getComponent<TransformComponent>()->rotation = Vector3(0, arrowsAngle, 0); 
         arrows->getComponent<TransformComponent>()->scale = Vector3(1, 1, 1) * swingHandle; 
 
         std::cout << swingTime << std::endl; 

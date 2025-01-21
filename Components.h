@@ -16,6 +16,37 @@ struct TransformComponent {
         const Vector3& rot = Vector3(0,0,0),
         const Vector3& scl = Vector3(1, 1, 1)
     ) : position(pos), rotation(rot), scale(scl) {}
+
+    Vector3 getForward() const {
+        // Convert degrees to radians
+        const double DEG_TO_RAD = 3.14159265359 / 180.0;
+
+        // Get rotation angles and convert to radians
+        double pitch = rotation.x * DEG_TO_RAD;  // X rotation
+        double yaw = rotation.y * DEG_TO_RAD;    // Y rotation
+        double roll = rotation.z * DEG_TO_RAD;   // Z rotation
+
+        // Calculate forward vector components
+        // We only need yaw and pitch for forward vector (roll doesn't affect forward direction)
+        double forwardX = sin(yaw) * cos(pitch);
+        double forwardY = -sin(pitch);  // Negative because pitch up gives negative Y
+        double forwardZ = cos(yaw) * cos(pitch);
+
+        // Return normalized forward vector
+        return Vector3(forwardX, forwardY, forwardZ, 0.0).normalize();
+    }
+
+    Vector3 getRight() const {
+        Vector3 forward = getForward();
+        Vector3 worldUp(0.0, 1.0, 0.0);
+        // Right is cross product of forward and up
+        return forward.cross(worldUp).normalize();
+    }
+
+    Vector3 getUp() const {
+        // Right vector cross forward vector gives up
+        return getRight().cross(getForward()).normalize();
+    }
 };
 
 struct NameComponent {
