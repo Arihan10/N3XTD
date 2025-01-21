@@ -1,3 +1,4 @@
+// GameTest.cpp
 #include "stdafx.h"
 #include <windows.h>
 #include <math.h>
@@ -22,16 +23,14 @@
 #include <fcntl.h>
 
 void createConsoleWindow() {
-    // Allocate a console
     AllocConsole();
 
-    // Redirect standard output streams to the console
+    // Redirect standard output streams
     FILE* fileStream;
     freopen_s(&fileStream, "CONOUT$", "w", stdout); // Redirect stdout
     freopen_s(&fileStream, "CONOUT$", "w", stderr); // Redirect stderr
     freopen_s(&fileStream, "CONIN$", "r", stdin);  // Redirect stdin
 
-    // Set the console title
     SetConsoleTitle(L"Debug Console");
 
     std::cout << "Console window successfully created!" << std::endl;
@@ -90,8 +89,10 @@ World world;
 // Physics system
 PhysicsSystem physicsSystem(world); 
 
-// Create a scene manager
-SceneManager sceneManager(world); 
+// Game start
+float timer = 0; 
+
+bool firstBounce = true; 
 
 void loadMesh(std::shared_ptr<Entity> entity, const std::string& filename, int zIndex = 0) {
     // MeshComponent mesh; 
@@ -113,24 +114,24 @@ void createStaticObject(std::shared_ptr<Entity> entity, const std::string& meshF
     entity->addComponent(NameComponent(name));
     entity->addComponent(ColorComponent(color.x, color.y, color.z));
 
-    loadMesh(entity, meshFile); 
+    loadMesh(entity, meshFile, zIndex); 
 
     if (scene) {
         scene->addEntity(entity);
     }
 }
 
-void createPhysicsObject(std::shared_ptr<Entity> entity, const std::string& meshFile, const std::string& name, const Vector3& position, const Vector3& rotation, const Vector3& scale, const Vector3& color, float mass, float restitution, float friction, float angularDamping, bool isStatic, Scene* scene = nullptr, int zIndex = 0) {
+void createPhysicsObject(std::shared_ptr<Entity> entity, const std::string& meshFile, const std::string& name, const Vector3& position, const Vector3& rotation, const Vector3& scale, const Vector3& color, float mass, float restitution, float friction, float angularDamping, bool isStatic, Scene* scene = nullptr, int zIndex = 0, bool isTrigger = false) {
     entity = world.createEntity(); 
     
     entity->addComponent(TransformComponent(position, rotation, scale));
     entity->addComponent(NameComponent(name));
     entity->addComponent(ColorComponent(color.x, color.y, color.z));
 
-    entity->addComponent(RigidbodyComponent(mass, restitution, friction, angularDamping, isStatic));
+    entity->addComponent(RigidbodyComponent(mass, restitution, friction, angularDamping, isStatic, isTrigger));
     entity->addComponent(ColliderComponent(ColliderComponent::BOX, scale)); 
 
-    loadMesh(entity, meshFile); 
+    loadMesh(entity, meshFile, zIndex); 
 
     if (scene) {
         scene->addEntity(entity); 
@@ -161,6 +162,7 @@ std::shared_ptr<Entity> guard1;
 std::shared_ptr<Entity> guard2; 
 std::shared_ptr<Entity> guard3; 
 std::shared_ptr<Entity> guard4; 
+std::shared_ptr<Entity> hole1; 
 
 void CreateLevel0() {
     // Create Suzanne
@@ -234,31 +236,52 @@ void CreateLevel1() {
         Vector3(0.5, 0.5, 0.5),
         1.0f, 0.5f, 0, 0, true, scenes[1]);
 
-    // Front guard
+    // Obstacles
     createPhysicsObject(guard4, "Cube.obj", "Guard4",
         Vector3(0, 2, 0), Vector3(0, 0, 0), Vector3(6, 3, 6),
         Vector3(0.5, 0.5, 0.5),
         1.0f, 0.5f, 0, 0, true, scenes[1]); 
+
+    // Hole
+    createPhysicsObject(hole1, "Hole_1.obj", "Hole1",
+        Vector3(0, 0.05, 35), Vector3(0, 0, 0), Vector3(1, 0.5, 1),
+        Vector3(0, 0, 0),
+        1.0f, 0.5f, 0, 0, true, scenes[1], 5, true); 
 }
 
 // Golf specific declarations
 Vector3 ballPositions[2] = { Vector3(0, 25, 8), Vector3(0, 25, -36) }; 
 
+bool ballMoving = true; 
+
 int currentLevel = 0; 
 
-float swingTime = -1, fullSwingTime = 5.0f, fullSwingForce = 150, arrowsAngle = 0, arrowsRotationSpeed = 90.0f; 
+float swingTime = -1, fullSwingTime = 3.5f, fullSwingForce = 130, arrowsAngle = 1, arrowsRotationSpeed = 90.0f, arrowInitialScale = 0.2f; 
+
+// Multiplayer specific declarations
+bool p1Turn = true, p1GotBall = false, p2GotBall = false, gameWon = false; 
+
+int p1Strokes = 0, p2Strokes = 0; 
+
+Vector3 p1Pos, p2Pos; 
 
 void LoadScene(int sceneID) {
-    size_t length = sizeof(scenes) / sizeof(Scene*);
+    size_t length = sizeof(scenes) / sizeof(Scene*); 
     for (int i = 0; i < length; ++i) {
         if (i != sceneID) scenes[i]->setEnabled(false);
         else scenes[i]->setEnabled(true);
     }
 
     ball->getComponent<TransformComponent>()->position = ballPositions[sceneID]; 
+    p1Pos = ballPositions[sceneID]; 
+    p2Pos = ballPositions[sceneID]; 
     physicsSystem.resetPhysicsState(ball.get()); 
 
     currentLevel = sceneID; 
+
+    p1GotBall = false; 
+    p2GotBall = false; 
+    timer = 0; 
 }
 
 void Init() {
@@ -270,11 +293,11 @@ void Init() {
     bgSprite->SetScale(1); 
 
     ball = world.createEntity();
-    ball->addComponent(TransformComponent(ballPositions[currentLevel], Vector3(0, 0, 0), Vector3(1.5, 1.5, 1.5))); 
+    ball->addComponent(TransformComponent(ballPositions[currentLevel], Vector3(0, 0, 0), Vector3(1.2, 1.2, 1.2))); 
     ball->addComponent(NameComponent("Ball")); 
     ball->addComponent(ColorComponent(1.0f, 1.0f, 1.0f)); 
-    ball->addComponent(RigidbodyComponent(1.0f, 0.6f, 0.002f, 0.00001f)); // Mass 1, high bounce
-    ball->addComponent(ColliderComponent(ColliderComponent::SPHERE, Vector3(1.5, 1.5, 1.5))); 
+    ball->addComponent(RigidbodyComponent(1.0f, 0.6f, 0.003f, 0.00001f)); // Mass 1, high bounce
+    ball->addComponent(ColliderComponent(ColliderComponent::SPHERE, Vector3(1.2, 1.2, 1.2))); 
     loadMesh(ball, "Sphere_Ico.obj"); 
 
     arrows = world.createEntity(); 
@@ -290,11 +313,41 @@ void Init() {
     CreateLevel0(); 
     CreateLevel1(); 
 
+    physicsSystem.setTriggerCallback([](Entity* entity1, Entity* entity2) {
+        if (entity1->getComponent<NameComponent>()->name == "Ball" || entity2->getComponent<NameComponent>()->name == "Ball") {
+            // This player already stroked his ball
+            if ((p1Turn && p1GotBall) || (p1Turn && p2GotBall)) return; 
+
+            std::cout << (p1Turn ? "P1" : "P2") << "'s BALL HIT HOLE! IT IS " << (ballMoving ? "MOVING" : "NOT MOVING") << std::endl; 
+
+            if (p1Turn) {
+                p1Strokes -= 2; 
+                p1GotBall = true; 
+            }
+            else {
+                p2Strokes -= 2; 
+                p2GotBall = true; 
+            }
+
+            // BOTH PLAYERS STROKED THEIR BALLS!
+            if (p1GotBall && p2GotBall) {
+                // LAST ROUND
+                if (currentLevel == sizeof(scenes) / sizeof(Scene*) - 1) {
+                    gameWon = true; 
+                }
+                else {
+                    LoadScene(currentLevel + 1); 
+                }
+            }
+        }
+    }); 
+
     LoadScene(1); 
 }
 
 void Update(const float deltaTime) {
     float _deltaTime = deltaTime / 1000.0; 
+    timer += _deltaTime; 
 
     bool movingCamera = App::IsKeyPressed(VK_SHIFT); 
 
@@ -351,64 +404,84 @@ void Update(const float deltaTime) {
         }
     }
 
-    if (App::IsKeyPressed('F')) {
-        Vector3 hitPoint = ball->getComponent<TransformComponent>()->position + Vector3(0, -0.2, 0); // Slightly below center
-        // Vector3 clubForce = Vector3(forwardDir.x * power, upAngle * power, forwardDir.z * power); 
-        Vector3 clubForce = Vector3(2, 2, 0);
-        physicsSystem.applyForce(ball.get(), clubForce, hitPoint);
-    } else if (App::IsKeyPressed('T')) {
-        // ball->getComponent<TransformComponent>()->position = Vector3(0, 25, 8); 
-        // ball->getComponent<RigidbodyComponent>()->velocity = Vector3(0, 0, 0); 
+    if (App::IsKeyPressed('T')) {
         LoadScene(currentLevel); 
-    }
-
-    /*float force = 50;
-    if (keyTracker.IsKeyDown(VK_LEFT)) physicsSystem.applyForce(ball.get(), Vector3(-force, 0, 0), ball->getComponent<TransformComponent>()->position);
-    if (keyTracker.IsKeyDown(VK_RIGHT)) physicsSystem.applyForce(ball.get(), Vector3(force, 0, 0), ball->getComponent<TransformComponent>()->position); 
-    if (keyTracker.IsKeyDown(VK_UP)) physicsSystem.applyForce(ball.get(), Vector3(0, 0, force), ball->getComponent<TransformComponent>()->position); 
-    if (keyTracker.IsKeyDown(VK_DOWN)) physicsSystem.applyForce(ball.get(), Vector3(0, 0, -force), ball->getComponent<TransformComponent>()->position); 
-    if (keyTracker.IsKeyDown(VK_SPACE)) physicsSystem.applyForce(ball.get(), Vector3(0, force, 0), ball->getComponent<TransformComponent>()->position);
-    if (keyTracker.IsKeyDown('C')) LoadScene(currentLevel + 1);*/
+    } else if (keyTracker.IsKeyDown('C')) LoadScene(currentLevel + 1); 
 
     if (App::IsKeyPressed(VK_LEFT)) arrowsAngle -= arrowsRotationSpeed * _deltaTime; 
     if (App::IsKeyPressed(VK_RIGHT)) arrowsAngle += arrowsRotationSpeed * _deltaTime; 
 
-    float swingHandle = (::std::min<float>(swingTime, fullSwingTime)) / fullSwingTime;
+    float swingPercentage = (::std::min<float>(swingTime, fullSwingTime)) / fullSwingTime;
 
-    if (keyTracker.IsKeyDown(VK_SPACE)) {
-        // swinging = true; 
-        ball->getComponent<MeshComponent>()->zIndex = 1; 
-        arrows->getComponent<MeshComponent>()->zIndex = 1; 
-        arrows->getComponent<TransformComponent>()->position = ball->getComponent<TransformComponent>()->position; 
-        arrows->getComponent<TransformComponent>()->rotation = ball->getComponent<TransformComponent>()->rotation; 
-        arrows->getComponent<TransformComponent>()->scale = Vector3(0, 0, 0); 
-        arrows->setEnabled(true); 
-
+    if (keyTracker.IsKeyDown(VK_SPACE) && !ballMoving) {
         swingTime = 0; 
     } else if (keyTracker.IsKeyUp(VK_SPACE)) {
-        // swinging = false; 
         ball->getComponent<MeshComponent>()->zIndex = 0; 
         arrows->getComponent<MeshComponent>()->zIndex = 0; 
         arrows->setEnabled(false); 
 
-        float swingForce = swingHandle * fullSwingForce; 
-        // physicsSystem.applyForce(ball.get(), Vector3(0, 0, swingForce), ball->getComponent<TransformComponent>()->position); 
+        float swingForce = swingPercentage * fullSwingForce; 
         physicsSystem.applyForce(ball.get(), arrows->getComponent<TransformComponent>()->getForward() * swingForce, ball->getComponent<TransformComponent>()->position);
-
+        
+        ballMoving = true; 
         swingTime = -1; 
     }
 
     if (swingTime >= 0) {
         swingTime += _deltaTime; 
-
-        arrows->getComponent<TransformComponent>()->rotation = Vector3(0, arrowsAngle, 0); 
-        arrows->getComponent<TransformComponent>()->scale = Vector3(1, 1, 1) * swingHandle; 
-
         std::cout << swingTime << std::endl; 
+
+        arrows->getComponent<TransformComponent>()->scale = (Vector3(1, 1, 1) * swingPercentage) + (Vector3(1, 1, 1) * arrowInitialScale); 
+        arrows->getComponent<ColorComponent>()->r = swingPercentage; 
+        arrows->getComponent<ColorComponent>()->g = 1 - swingPercentage; 
+        arrows->getComponent<ColorComponent>()->b = 0; 
+    }
+    else {
+        arrows->getComponent<ColorComponent>()->r = 0; 
+        arrows->getComponent<ColorComponent>()->g = 0; 
+        arrows->getComponent<ColorComponent>()->b = 1; 
     }
 
     physicsSystem.update(_deltaTime); 
     keyTracker.Update(); 
+
+    if (ball->getComponent<RigidbodyComponent>()->velocity.length() < 0.03f && ball->getComponent<RigidbodyComponent>()->angularVelocity.length() < 0.03f) {
+        ball->getComponent<MeshComponent>()->zIndex = 1; 
+        arrows->getComponent<MeshComponent>()->zIndex = 1; 
+        arrows->getComponent<TransformComponent>()->position = ball->getComponent<TransformComponent>()->position; 
+        arrows->getComponent<TransformComponent>()->rotation = Vector3(0, arrowsAngle, 0); 
+
+        if (ballMoving) {
+            std::cout << "ball stopped " << std::to_string(timer) << std::endl; 
+            arrows->getComponent<TransformComponent>()->scale = Vector3(1, 1, 1) * arrowInitialScale; 
+            arrows->setEnabled(true); 
+
+            if (firstBounce) firstBounce = false; 
+            else {
+                // PLAYER SWITCH TURNS
+                if (p1Turn) {
+                    p1Pos = ball->getComponent<TransformComponent>()->position; 
+                    ++p1Strokes; 
+
+                    ball->getComponent<TransformComponent>()->position = p2Pos; 
+                }
+                else {
+                    p2Pos = ball->getComponent<TransformComponent>()->position; 
+                    ++p2Strokes; 
+
+                    ball->getComponent<TransformComponent>()->position = p1Pos; 
+                }
+
+                p1Turn = !p1Turn; 
+            }
+        }
+
+        ballMoving = false; 
+    }
+    else {
+        ball->getComponent<MeshComponent>()->zIndex = 0; 
+        arrows->getComponent<MeshComponent>()->zIndex = 0; 
+    }
 }
 
 void Render() {
@@ -528,7 +601,7 @@ void Render() {
                     tri.points[l] = vert;
                 }
 
-                // Set triangle properties
+                // Set triangles properties to go into buffer
                 tri.depth = depth;
                 // tri.r = dp * color->r; 
                 // tri.g = dp * color->g; 
@@ -548,7 +621,7 @@ void Render() {
         const ScanlineTriangle& tri = triangleQueue.top();
         Vector3 screenPoints[3] = { tri.points[0], tri.points[1], tri.points[2] };
 
-        // Sort points by Y coordinate for scanline
+        // Sort points by Y coordinate for scanline - ABC
         if (screenPoints[0].y > screenPoints[1].y) std::swap(screenPoints[0], screenPoints[1]);
         if (screenPoints[1].y > screenPoints[2].y) std::swap(screenPoints[1], screenPoints[2]);
         if (screenPoints[0].y > screenPoints[1].y) std::swap(screenPoints[0], screenPoints[1]);
@@ -574,12 +647,12 @@ void Render() {
             x2 += slope2;
         }
 
-        // Bottom part of triangle
+        // Check whether B or C for bottom
         slope1 = (screenPoints[2].y - screenPoints[1].y) != 0 ?
             (screenPoints[2].x - screenPoints[1].x) / (screenPoints[2].y - screenPoints[1].y) : 0;
         x1 = screenPoints[1].x;
 
-        // Scan bottom half of triangle
+        // Scan bottom half
         for (int y = (int)screenPoints[1].y; y < (int)screenPoints[2].y; y++) {
             if (y >= 0 && y < WINDOW_HEIGHT) {
                 float startX = x1 < x2 ? x1 : x2;
@@ -592,6 +665,17 @@ void Render() {
 
         triangleQueue.pop();
     }
+
+    // PLAYER INFORMATION
+    App::Print(30, WINDOW_HEIGHT - 30, (p1Turn ? "PLAYER 1 turn to move" : "PLAYER 2 turn to move"), 0, 0, 0, GLUT_BITMAP_HELVETICA_12); 
+
+    std::string temp = std::string("PLAYER 1 STROKES: ") + std::to_string(p1Strokes); 
+    const char* p1StrokesText = temp.c_str(); 
+    App::Print(WINDOW_WIDTH - 130, WINDOW_HEIGHT - 30, p1StrokesText, 0, 0, 0, GLUT_BITMAP_HELVETICA_12); 
+
+    std::string temp2 = std::string("PLAYER 2 STROKES: ") + std::to_string(p2Strokes); 
+    const char* p2StrokesText = temp2.c_str(); 
+    App::Print(WINDOW_WIDTH - 130, WINDOW_HEIGHT - 50, p2StrokesText, 0, 0, 0, GLUT_BITMAP_HELVETICA_12); 
 }
 
 void Shutdown()

@@ -1,11 +1,13 @@
-// PhysicsSystem.h
 #ifndef PHYSICS_SYSTEM_H
 #define PHYSICS_SYSTEM_H
-
 #include "World.h"
 #include "Vector3.h"
 #include "Entity.h"
 #include "Components.h"
+#include <functional>
+
+// Callback type for trigger events
+using TriggerCallback = std::function<void(Entity*, Entity*)>;
 
 // Structure to represent an oriented box for collision
 struct OrientedBox {
@@ -14,7 +16,6 @@ struct OrientedBox {
     Vector3 axisX;  // Local right axis after rotation
     Vector3 axisY;  // Local up axis after rotation
     Vector3 axisZ;  // Local forward axis after rotation
-
     OrientedBox(const Vector3& pos, const Vector3& size, const Vector3& rotation);
     Vector3 getVertex(int i) const;  // Get box vertex in world space
     void getMinMaxOnAxis(const Vector3& axis, float& min, float& max) const;
@@ -24,6 +25,7 @@ class PhysicsSystem {
 private:
     World& world;
     float gravity = -9.81f * 4;
+    TriggerCallback triggerCallback;  // Callback for trigger events
 
     // Helper methods for collision detection
     bool checkSphereSphereCollision(
@@ -49,9 +51,6 @@ private:
         float& depth,
         bool& shouldFlip);
 
-    // Transform matrix creation for rotations
-    void createRotationMatrix(const Vector3& rotation, double matrix[4][4]);
-
     // Collision response helpers
     void handleStaticCollision(
         TransformComponent* transform,
@@ -63,18 +62,20 @@ private:
     void resolveCollision(
         TransformComponent* trans1, RigidbodyComponent* rb1, ColliderComponent* col1,
         TransformComponent* trans2, RigidbodyComponent* rb2, ColliderComponent* col2,
-        const Vector3& normal, float depth); 
+        const Vector3& normal, float depth);
 
 public:
     PhysicsSystem(World& w) : world(w) {}
 
+    void setTriggerCallback(TriggerCallback callback) {
+        triggerCallback = callback;
+    }
+
     void update(float deltaTime);
     void applyForce(Entity* entity, const Vector3& force, const Vector3& point);
-
     float getGravity() const { return gravity; }
     void setGravity(float g) { gravity = g; }
-
-    void resetPhysicsState(Entity* entity); 
+    void resetPhysicsState(Entity* entity);
 };
 
 #endif // PHYSICS_SYSTEM_H

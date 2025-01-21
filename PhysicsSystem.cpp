@@ -322,9 +322,9 @@ void PhysicsSystem::handleStaticCollision(
             if (collider->type == ColliderComponent::SPHERE && newSpeed > 0.0001f) {
                 float radius = collider->size.x;
 
-                // Get the horizontal direction of motion
+                // Horizontal direction of motion
                 Vector3 horizontalVel = newVel;
-                horizontalVel.y = 0;  // Zero out vertical component
+                horizontalVel.y = 0; 
                 horizontalVel = horizontalVel.normalize();
 
                 // Rotation axis should be perpendicular to motion in the horizontal plane
@@ -379,25 +379,23 @@ void PhysicsSystem::update(float deltaTime) {
 
         if (!rb || !transform || rb->isStatic || !entity->isEnabled) continue;
 
-        // Apply gravity
+        // Set gravity
         rb->acceleration.y = gravity;
 
-        // Apply air resistance
         Vector3 airResistance = rb->velocity * -rb->airResistance * rb->velocity.length();
         rb->acceleration = rb->acceleration + airResistance;
 
-        // Add angular damping
         const float angularDamping = 0.98f;
         rb->angularVelocity = rb->angularVelocity * angularDamping;
 
-        // Enforce maximum angular velocity
+        // Enforce maximum angular velocity - sometimes angular velocity doesn't stop and it snowballs, check why
         const float MAX_ANGULAR_SPEED = 20.0f;
         float angularSpeed = rb->angularVelocity.length();
         if (angularSpeed > MAX_ANGULAR_SPEED) {
             rb->angularVelocity = rb->angularVelocity * (MAX_ANGULAR_SPEED / angularSpeed);
         }
 
-        // Update rotation based on angular velocity
+        // Update rotation -> angular velocity
         transform->rotation = transform->rotation + rb->angularVelocity * RAD_TO_DEG * deltaTime;
 
         // Update linear velocity and position
@@ -427,13 +425,14 @@ void PhysicsSystem::update(float deltaTime) {
             bool collision = false;
 
             if (col1->type == ColliderComponent::SPHERE && col2->type == ColliderComponent::SPHERE) {
-                collision = checkSphereSphereCollision(
+                /*collision = checkSphereSphereCollision(
                     trans1->position + col1->offset, col1->size.x,
                     trans2->position + col2->offset, col2->size.x,
-                    normal, depth);
+                    normal, depth);*/
+                // do nothing
             }
             else {
-                // Create oriented boxes if needed for box collisions
+                // Oriented Boxes - rotation
                 OrientedBox box1(trans1->position + col1->offset, col1->size, trans1->rotation);
                 OrientedBox box2(trans2->position + col2->offset, col2->size, trans2->rotation);
 
@@ -454,7 +453,16 @@ void PhysicsSystem::update(float deltaTime) {
             }
 
             if (collision) {
-                resolveCollision(trans1, rb1, col1, trans2, rb2, col2, normal, depth);
+                // DOES NOT resolve collision
+                if (rb1->isTrigger || rb2->isTrigger) {
+                    if (triggerCallback) {
+                        triggerCallback(entity1.get(), entity2.get());
+                    }
+                }
+                // Only resolve collision if neither object is a trigger
+                else {
+                    resolveCollision(trans1, rb1, col1, trans2, rb2, col2, normal, depth);
+                }
             }
         }
     }
