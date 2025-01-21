@@ -472,7 +472,7 @@ void Update(const float deltaTime) {
                     ball->getComponent<TransformComponent>()->position = p1Pos; 
                 }
 
-                p1Turn = !p1Turn; 
+                if (!p1GotBall && !p2GotBall) p1Turn = !p1Turn; 
             }
         }
 
