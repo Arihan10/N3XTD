@@ -138,7 +138,7 @@ void createPhysicsObject(std::shared_ptr<Entity> entity, const std::string& mesh
     }
 }
 
-Scene* scenes[2] = { nullptr, nullptr }; 
+Scene* scenes[3] = { nullptr, nullptr, nullptr }; 
 
 CSimpleSprite* bgSprite; 
 
@@ -162,7 +162,16 @@ std::shared_ptr<Entity> guard1;
 std::shared_ptr<Entity> guard2; 
 std::shared_ptr<Entity> guard3; 
 std::shared_ptr<Entity> guard4; 
+std::shared_ptr<Entity> guardBack; 
 std::shared_ptr<Entity> hole1; 
+
+// Level 2
+std::shared_ptr<Entity> box4;
+std::shared_ptr<Entity> guard5;
+std::shared_ptr<Entity> guard6;
+std::shared_ptr<Entity> guard7;
+std::shared_ptr<Entity> guard8;
+std::shared_ptr<Entity> hole2;
 
 void CreateLevel0() {
     // Create Suzanne
@@ -221,25 +230,31 @@ void CreateLevel1() {
     // Left guard
     createPhysicsObject(guard1, "Cube.obj", "Guard1",
         Vector3(-15, 0, 0), Vector3(0, 0, 0), Vector3(1, 3, 40),
-        Vector3(0.5, 0.5, 0.5),
+        Vector3(0.5, 0, 0.5),
         1.0f, 0.5f, 0, 0, true, scenes[1]);
 
     // Right guard
     createPhysicsObject(guard2, "Cube.obj", "Guard2",
         Vector3(15, 0, 0), Vector3(0, 0, 0), Vector3(1, 3, 40),
-        Vector3(0.5, 0.5, 0.5),
+        Vector3(0.5, 0, 0.5),
         1.0f, 0.5f, 0, 0, true, scenes[1]);
 
     // Front guard
     createPhysicsObject(guard3, "Cube.obj", "Guard3",
         Vector3(0, 0, 40), Vector3(0, 0, 0), Vector3(14, 3, 1),
-        Vector3(0.5, 0.5, 0.5),
-        1.0f, 0.5f, 0, 0, true, scenes[1]);
+        Vector3(0.5, 0, 0.5),
+        1.0f, 0.5f, 0, 0, true, scenes[1]); 
+
+    // Back guard
+    /*createPhysicsObject(guardBack, "Cube.obj", "GuardBack",
+        Vector3(0, 0, -40), Vector3(0, 0, 0), Vector3(14, 3, 1),
+        Vector3(0.5, 0, 0.5),
+        1.0f, 0.5f, 0, 0, true, scenes[1]);*/
 
     // Obstacles
     createPhysicsObject(guard4, "Cube.obj", "Guard4",
         Vector3(0, 2, 0), Vector3(0, 0, 0), Vector3(6, 3, 6),
-        Vector3(0.5, 0.5, 0.5),
+        Vector3(0.5, 0, 0.5),
         1.0f, 0.5f, 0, 0, true, scenes[1]); 
 
     // Hole
@@ -249,8 +264,46 @@ void CreateLevel1() {
         1.0f, 0.5f, 0, 0, true, scenes[1], 5, true); 
 }
 
+void CreateLevel2() {
+    // Ground
+    createPhysicsObject(box3, "Cube.obj", "Box4",
+        Vector3(0, 0, 0), Vector3(0, 0, 0), Vector3(14, 0.1, 40),
+        Vector3(0, 1, 0),
+        1.0f, 0.5f, 0, 0, true, scenes[2]);
+
+    // Left guard
+    createPhysicsObject(guard1, "Cube.obj", "Guard5",
+        Vector3(-15, 0, 0), Vector3(0, 0, 0), Vector3(1, 3, 40),
+        Vector3(0.5, 0.5, 0.5),
+        1.0f, 0.5f, 0, 0, true, scenes[2]);
+
+    // Right guard
+    createPhysicsObject(guard2, "Cube.obj", "Guard6",
+        Vector3(15, 0, 0), Vector3(0, 0, 0), Vector3(1, 3, 40),
+        Vector3(0.5, 0.5, 0.5),
+        1.0f, 0.5f, 0, 0, true, scenes[2]);
+
+    // Front guard
+    createPhysicsObject(guard3, "Cube.obj", "Guard7",
+        Vector3(0, 0, 40), Vector3(0, 0, 0), Vector3(14, 3, 1),
+        Vector3(0.5, 0.5, 0.5),
+        1.0f, 0.5f, 0, 0, true, scenes[2]);
+
+    // Obstacles
+    createPhysicsObject(guard4, "Cube.obj", "Guard8",
+        Vector3(0, 2, 0), Vector3(0, 0, 0), Vector3(6, 3, 6),
+        Vector3(0.5, 0.5, 0.5),
+        1.0f, 0.5f, 0, 0, true, scenes[2]);
+
+    // Hole
+    createPhysicsObject(hole1, "Hole_1.obj", "Hole9",
+        Vector3(0, 0.05, 35), Vector3(0, 0, 0), Vector3(1, 0.5, 1),
+        Vector3(0, 0, 0),
+        1.0f, 0.5f, 0, 0, true, scenes[2], 5, true);
+}
+
 // Golf specific declarations
-Vector3 ballPositions[2] = { Vector3(0, 25, 8), Vector3(0, 25, -36) }; 
+Vector3 ballPositions[2] = { Vector3(0, 6, 8), Vector3(0, 6, -36) }; 
 
 bool ballMoving = true; 
 
@@ -309,9 +362,11 @@ void Init() {
 
     scenes[0] = new Scene("Demo", world); 
     scenes[1] = new Scene("Level1", world); 
+    scenes[2] = new Scene("Level2", world); 
 
     CreateLevel0(); 
     CreateLevel1(); 
+    CreateLevel2(); 
 
     physicsSystem.setTriggerCallback([](Entity* entity1, Entity* entity2) {
         if (entity1->getComponent<NameComponent>()->name == "Ball" || entity2->getComponent<NameComponent>()->name == "Ball") {
@@ -319,6 +374,8 @@ void Init() {
             if ((p1Turn && p1GotBall) || (p1Turn && p2GotBall)) return; 
 
             std::cout << (p1Turn ? "P1" : "P2") << "'s BALL HIT HOLE! IT IS " << (ballMoving ? "MOVING" : "NOT MOVING") << std::endl; 
+
+            if (ballMoving) return; 
 
             if (p1Turn) {
                 p1Strokes -= 2; 
@@ -429,7 +486,7 @@ void Update(const float deltaTime) {
 
     if (swingTime >= 0) {
         swingTime += _deltaTime; 
-        std::cout << swingTime << std::endl; 
+        // std::cout << swingTime << std::endl; 
 
         arrows->getComponent<TransformComponent>()->scale = (Vector3(1, 1, 1) * swingPercentage) + (Vector3(1, 1, 1) * arrowInitialScale); 
         arrows->getComponent<ColorComponent>()->r = swingPercentage; 
@@ -442,46 +499,57 @@ void Update(const float deltaTime) {
         arrows->getComponent<ColorComponent>()->b = 1; 
     }
 
-    physicsSystem.update(_deltaTime); 
-    keyTracker.Update(); 
+    // std::cout << std::to_string(ball->getComponent<RigidbodyComponent>()->velocity.length()) + " " + std::to_string(ball->getComponent<RigidbodyComponent>()->angularVelocity.length()) << std::endl;
 
-    if (ball->getComponent<RigidbodyComponent>()->velocity.length() < 0.03f && ball->getComponent<RigidbodyComponent>()->angularVelocity.length() < 0.03f) {
-        ball->getComponent<MeshComponent>()->zIndex = 1; 
-        arrows->getComponent<MeshComponent>()->zIndex = 1; 
-        arrows->getComponent<TransformComponent>()->position = ball->getComponent<TransformComponent>()->position; 
-        arrows->getComponent<TransformComponent>()->rotation = Vector3(0, arrowsAngle, 0); 
+    if (ball->getComponent<RigidbodyComponent>()->velocity.length() < 0.1f && ball->getComponent<RigidbodyComponent>()->angularVelocity.length() < 0.1f) {
+        // physicsSystem.resetPhysicsState(ball.get()); 
+
+        ball->getComponent<MeshComponent>()->zIndex = 1;
+        arrows->getComponent<MeshComponent>()->zIndex = 1;
+        arrows->getComponent<TransformComponent>()->position = ball->getComponent<TransformComponent>()->position;
+        arrows->getComponent<TransformComponent>()->rotation = Vector3(0, arrowsAngle, 0);
 
         if (ballMoving) {
-            std::cout << "ball stopped " << std::to_string(timer) << std::endl; 
-            arrows->getComponent<TransformComponent>()->scale = Vector3(1, 1, 1) * arrowInitialScale; 
-            arrows->setEnabled(true); 
+            std::cout << "ball stopped " << std::to_string(timer) << std::endl;
+            arrows->getComponent<TransformComponent>()->scale = Vector3(1, 1, 1) * arrowInitialScale;
+            arrows->setEnabled(true);
 
-            if (firstBounce) firstBounce = false; 
+            if (firstBounce) firstBounce = false;
             else {
                 // PLAYER SWITCH TURNS
                 if (p1Turn) {
-                    p1Pos = ball->getComponent<TransformComponent>()->position; 
-                    ++p1Strokes; 
+                    p1Pos = ball->getComponent<TransformComponent>()->position;
+                    ++p1Strokes;
 
-                    ball->getComponent<TransformComponent>()->position = p2Pos; 
+                    ball->getComponent<TransformComponent>()->position = p2Pos;
                 }
                 else {
-                    p2Pos = ball->getComponent<TransformComponent>()->position; 
-                    ++p2Strokes; 
+                    p2Pos = ball->getComponent<TransformComponent>()->position;
+                    ++p2Strokes;
 
-                    ball->getComponent<TransformComponent>()->position = p1Pos; 
+                    ball->getComponent<TransformComponent>()->position = p1Pos;
                 }
 
-                if (!p1GotBall && !p2GotBall) p1Turn = !p1Turn; 
+                if (p1GotBall) p1Turn = false;
+                else if (p2GotBall) p1Turn = true;
+                else p1Turn = !p1Turn; 
             }
         }
 
-        ballMoving = false; 
+        ballMoving = false;
     }
     else {
-        ball->getComponent<MeshComponent>()->zIndex = 0; 
-        arrows->getComponent<MeshComponent>()->zIndex = 0; 
+        ball->getComponent<MeshComponent>()->zIndex = 0;
+        arrows->getComponent<MeshComponent>()->zIndex = 0;
     }
+
+    if (ball->getComponent<TransformComponent>()->position.y <= -5) {
+        ball->getComponent<TransformComponent>()->position = ballPositions[currentLevel]; 
+        physicsSystem.resetPhysicsState(ball.get()); 
+    }
+
+    physicsSystem.update(_deltaTime); 
+    keyTracker.Update(); 
 }
 
 void Render() {
@@ -671,11 +739,11 @@ void Render() {
 
     std::string temp = std::string("PLAYER 1 STROKES: ") + std::to_string(p1Strokes); 
     const char* p1StrokesText = temp.c_str(); 
-    App::Print(WINDOW_WIDTH - 130, WINDOW_HEIGHT - 30, p1StrokesText, 0, 0, 0, GLUT_BITMAP_HELVETICA_12); 
+    App::Print(WINDOW_WIDTH - 160, WINDOW_HEIGHT - 30, p1StrokesText, 0, 0, 0, GLUT_BITMAP_HELVETICA_12); 
 
     std::string temp2 = std::string("PLAYER 2 STROKES: ") + std::to_string(p2Strokes); 
     const char* p2StrokesText = temp2.c_str(); 
-    App::Print(WINDOW_WIDTH - 130, WINDOW_HEIGHT - 50, p2StrokesText, 0, 0, 0, GLUT_BITMAP_HELVETICA_12); 
+    App::Print(WINDOW_WIDTH - 160, WINDOW_HEIGHT - 50, p2StrokesText, 0, 0, 0, GLUT_BITMAP_HELVETICA_12); 
 }
 
 void Shutdown()
