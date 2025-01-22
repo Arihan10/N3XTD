@@ -371,7 +371,7 @@ void Init() {
     physicsSystem.setTriggerCallback([](Entity* entity1, Entity* entity2) {
         if (entity1->getComponent<NameComponent>()->name == "Ball" || entity2->getComponent<NameComponent>()->name == "Ball") {
             // This player already stroked his ball
-            if ((p1Turn && p1GotBall) || (p1Turn && p2GotBall)) return; 
+            if ((p1Turn && p1GotBall) || (!p1Turn && p2GotBall)) return; 
 
             std::cout << (p1Turn ? "P1" : "P2") << "'s BALL HIT HOLE! IT IS " << (ballMoving ? "MOVING" : "NOT MOVING") << std::endl; 
 
